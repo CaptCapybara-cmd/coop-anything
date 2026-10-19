@@ -59,14 +59,23 @@ on Linux, runs under Proton, and the quest/stage messages are mapped; nothing qu
   struct's member initializers inside the enclosing class; split into two constructors. Branch
   [`fix/clang-cl-build`](https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer/tree/fix/clang-cl-build).
   Test: builds with clang-cl 19 + xwin; `cdmp_tests.exe` prints "All tests passed" under Proton's Wine.
-- **Stage test driver** (local, not pushed yet): `[dev] stage_force_test=1` injects a branch request on the first
-  waiting stage after a negative control, and logs `StageTest: RESULT: PASS|FAIL|SKIP`. Run with
-  `StageChartForceBranchDevReq`: negative control PASS, real test FAIL, explained by the handler being a stub.
-  The `StageBranchStateReq` variant is built but not run.
+- **Dev test tooling** on branch
+  [`dev/quest-stage-tests`](https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer/tree/dev/quest-stage-tests),
+  all off by default (`[dev]` keys):
+  - `test_autoload` / `test_autoquit`: the mod presses E inside its own game window until the world loads, and closes the
+    game without saving when a test ends. The title and menus react to `WM_KEYDOWN`/`WM_CHAR`, not to Raw Input.
+    Entered the world unattended in 3 of 3 runs after that change.
+  - `stage_record` / `stage_replay`: records the stage branches the game itself chooses, keyed by the stage's static
+    sequencer key (`PrepareSequencerAck`), and replays the first one onto the local instance in a later session.
+  - `stage_force_test`: kept as the mutation case. `StageChartForceBranchDevReq` is a stub; a made-up branch sent with
+    `StageBranchStateReq` crashes the game.
 
 ## QA
 
 - No automated two-player test exists yet. Checks that ran are listed with dates in [NOTES.md](NOTES.md).
+- One-PC record/replay, unattended (2026-10-19): record session 3 stage keys; replay session mapped key 0xF4CB1 to
+  instance 0x164, server answered state 1 / branch 0 in 9 ms, the game continued from it by itself, no crash in 30 s.
+  One player, one save, one stage: groundwork for host-to-guest stage sync, not co-op yet.
 - One-PC echo smoke test under Proton (cdmp's `cdmp_peer --mode relay`): hooks installed, overlay drew 15k+ frames,
   echo copy spawned, 500+ events replayed with 0 rejected. A person moved the character; nothing asserted automatically.
 
@@ -85,13 +94,12 @@ smoke test above). Back up saves; do not save while the other player is in your 
 
 ## Next steps
 
-1. Run the stage test with `StageBranchStateReq` (2436) on a test copy: does an injected request branch a waiting
-   stage like the game's own?
-2. Map static stage keys to runtime instance ids on each PC (from `StageBranchStateAck`, `PrepareSequencerAck`,
-   `UpdateStageListAck`), so the host's progress can be replayed on the guest's own instances.
+1. Send the host's stage branches (by sequencer key) over cdmp's network and replay them on the guest, first with
+   cdmp's echo relay on one PC, then on two PCs.
+2. Handle stages that exist on one side only (players at different story points).
 3. Relay host quest/mission deltas to the guest, then decide per quest whether to replay branches or only show
    the host's objective.
-4. Build an in-game bot that loads the save and drives the test without a person.
+4. Extend the in-game bot from loading the save to moving the player, so branches that need the player can be recorded.
 
 ## Tools in this folder
 

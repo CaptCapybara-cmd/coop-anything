@@ -178,3 +178,59 @@ Derived:
 - Every quest/stage cheat is gone in retail. The remaining lever is the game's own StageBranchStateReq (u64 instance | u32 branch | u16),
   sent by the guest's mod with the guest's local instance id. The stage_force_test driver now defaults to opcode 2436 (14-byte payload).
 Not yet run: the StageBranchStateReq live test.
+
+## 2026-10-19 16:18 — first "unattended" run: injected StageBranchStateReq crashes the game (autoload did NOT work)
+Setup: cdmp + new test_input.cpp ([dev] test_autoload=1: in-process Raw Input synthesis, WM_INPUT with a marker handle
+answered by a GetRawInputData hook, GetAsyncKeyState/GetForegroundWindow/GetFocus faked only during autoload;
+[dev] test_autoquit=1). Stage test with opcode 2436 (StageBranchStateReq, 14-byte payload).
+Observed:
+- Autoload: Enter every 4 s from 15 s after the window appeared; the world started loading after 14 presses, BUT the owner
+  entered the world by pressing E (the game's confirm key on the title/menu). So this run had human input, and whether the
+  synthesized Raw Input reaches the game at all is unknown (Enter may just do nothing there).
+- Negative control PASS (made-up instance 0x7FFFFFF0, no answer, no crash).
+- Target: stage 0x58 (hash 0x22B6EC91), reported waiting (Ack state 0, branch FFFFFFFF) for 21 s; injected StageBranchStateReq(0x58, branch 0, 0).
+  53 ms later: access violation (null read) on the main thread at exe+0xAA1B4D in function ~0xAA1A10:
+  `rax = [[[r15+0x58]+0x38]+8]` = 0, then `mov rdx, [rax + rcx*8]` with rcx = our branch (0). The game's crash reporter ran.
+  No GPU device loss this time. Capture ends just before (last records not flushed before the process died).
+- Test-copy save slot1 unchanged by this run.
+Derived:
+- StageBranchStateReq is not validated against the stage's branch table: an index the stage does not have crashes.
+  The game only sends branches it knows exist, so "first waiting stage, branch 0" is not a safe probe.
+- The 12:18 menu crash (GPU device lost, 90 s after the stub request) is a different signature; still unknown.
+Consequence for quest sync: only replay (instance, branch) pairs the host's game actually sent for the same static stage,
+mapped to the guest's own instance id. Never synthesize branch numbers.
+
+## 2026-10-19 16:23 / 16:27 — autoload checks without human input: FAIL (game reads the keys but ignores them)
+Observed (two runs, nobody touched the window, test_autoquit closed the game each time):
+- 15 synthesized E (0x45) taps (120 ms) at 4 s intervals, starting 15 s after the window appeared. The game read our marker
+  30 times per run (one GetRawInputData per down/up, command RID_INPUT 0x10000003, 48-byte buffer = sizeof(RAWINPUT)),
+  also with a real keyboard hDevice from GetRawInputDeviceList (run 2). World never started loading: RESULT FAIL.
+Unknown (next to rule out): whether the title needs a HOLD of E rather than a tap; whether the game drops input while its
+window is not active (tracked via WM_ACTIVATE*/focus messages, not only GetForegroundWindow/GetFocus).
+- 16:33 run, owner focused the window (title-bar click) and pressed nothing: same FAIL, 30 reads. Focus alone is not the cause.
+- 16:37 run, queued WM_INPUT (PostMessage, per-event marker handles), no human: FAIL. Game read 29-30 events; it calls
+  GetAsyncKeyState ~100/s but never for E (0x45). RegisterRawInputDevices hook saw no keyboard hwndTarget (registered before
+  our hook or with NULL). Guess: the menus (an HTML/CSS-style UI, "selector-*" class strings in the exe) take WM_KEYDOWN/WM_CHAR.
+- 16:42 run, raw events PLUS classic WM_KEYDOWN / WM_CHAR('e') / WM_KEYUP posted to the game window, no human input
+  (owner asked to keep hands off): PASS. GameLoadingStartReq after press 9 (~35 s of presses), "in the world" 4 s later,
+  test_autoquit closed the game. So the title/menu UI reads the classic key messages, not Raw Input.
+  Unattended path into the world: [dev] test_autoload=1 (default key E), test_autoquit=1.
+
+## 2026-10-19 16:46-16:55 — record + replay of stage branches by static key: PASS (unattended, one PC, same save)
+Setup: cdmp src/mod/net/stage_replay.cpp. Stage identity = sequencer key from PrepareSequencerAck (`hdr5 | u32 player |
+u64 instance | u16 | u32 key`), stable across sessions; instance ids are not (key 0xF4CB1 was 0x159/0x2E0, 0x163, 0x164).
+Test-copy saves backed up before, restored between the two sessions (record session left them unchanged).
+Observed (no human input; autoload 8 presses each time, test_autoquit closed the game):
+- Record session ([dev] stage_record=1, 240 s idle in the world): the game itself sent StageBranchStateReq for keys
+  0xF4880, 0xF4CB1, 0xF4CB5: branch 0 first, then branch 1 repeatedly (~16 s apart). cdmp_stage_record.txt, RESULT PASS.
+- Replay session ([dev] stage_replay=1, same save): key 0xF4CB1 came up as instance 0x164, waiting since t=48.9 s.
+  2 s+ later the mod sent StageBranchStateReq(0x164, 0, 0) at t=61.326 — the first branch request for 0x164 in the
+  session. Server: StageOnBranchEventAck + StageBranchStateAck(state 1, branch 0) at t=61.335 (9 ms). Then the GAME continued
+  by itself with branch 1 for 0x164 at t=78.0, as in the recording. Game still running 30 s later: RESULT PASS x2.
+  Verified in the packet capture, not only the driver's log.
+Derived:
+- Replaying a branch the game really chose, onto the local instance found by static key, is accepted and the stage chart
+  continues from it. This is the mechanism for "guest follows host" on stages both worlds have.
+Limits (honest): one PC, one player, same save, one stage, one run. Not yet: a second PC/player, stages where host and guest
+are at different story points, quest/mission list deltas, rewards. Mutation counterpart already seen: a made-up branch
+(16:18) crashes the game.
