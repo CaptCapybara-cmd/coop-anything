@@ -6558,3 +6558,91 @@
   - https://www.nexusmods.com/farcry2/mods/368
   - https://steamcommunity.com/app/19900/discussions/0/864973123475897875
   checked: '2026-10-19'
+- game: Crimson Desert
+  year: 2026
+  engine: BlackSpace Engine
+  project: Crimson Desert Multiplayer (cdmp)
+  url: https://github.com/ByJunter/CrimsonDesertMultiplayer
+  other_urls:
+  - https://www.nexusmods.com/crimsondesert/mods/3677
+  - https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/crimson-desert
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: 'no'
+    enemies: partial
+    world_state: 'no'
+    items: per-player
+  players: '2'
+  networking: steam-relay
+  open_source: 'yes'
+  last_activity: '2026-10'
+  qa: none
+  notes: >-
+    ASI mod (Ultimate ASI Loader) for Steam build 1.0.0.2976 / game version 2.03.02 only; turns itself off on other
+    builds. Each player stays in their own save and sees the other; hostile enemies near the host are shared
+    (experimental); quests, NPCs and items are not shared; Steam friends only. GPL-3.0. The author stopped work at
+    v0.2.0 and invites others to continue it. A revival focused on shared quest progress is claimed in
+    cranebeaker/coop-anything#51: builds on Linux with clang-cl + xwin, one-PC echo smoke test ran under Proton
+    (no automated two-player test yet). Research and dated notes in games/crimson-desert.
+  sources:
+  - https://github.com/ByJunter/CrimsonDesertMultiplayer
+  - https://www.nexusmods.com/crimsondesert/mods/3677
+  - https://github.com/cranebeaker/coop-anything/issues/51
+  checked: '2026-10-19'
+  up_for_adoption: true
+- game: Crimson Desert
+  year: 2026
+  engine: BlackSpace Engine
+  project: CrimsonDesertCoop (blizz3010)
+  url: https://github.com/blizz3010/CrimsonDesertCoop
+  other_urls: []
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: 'yes'
+    story: 'no'
+    enemies: partial
+    world_state: 'no'
+    items: unknown
+  players: '2'
+  networking: steam-relay
+  open_source: partial
+  last_activity: '2026-07'
+  qa: none
+  notes: >-
+    Version 0.2.3 "in development" per its README: player 2 takes over a companion slot on the host; position, enemy HP
+    and some mount state sync are claimed; quest, cutscene and world-interaction sync are not applied. Source is public
+    but the repository has no license. Last push 2026-07-08. Claims are the author's; not tested here.
+  sources:
+  - https://github.com/blizz3010/CrimsonDesertCoop
+  checked: '2026-10-19'
+- game: Crimson Desert
+  year: 2026
+  engine: BlackSpace Engine
+  project: (unnamed, by No-Context2224)
+  url: https://wccftech.com/crimson-desert-2-player-co-op-mod-but-more-advanced-soon/
+  other_urls:
+  - https://insider-gaming.com/crimson-desert-multiplayer-mod-is-being-tested/
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: 'yes'
+    story: unknown
+    enemies: partial
+    world_state: unknown
+    items: unknown
+  players: '2'
+  networking: unknown
+  open_source: unknown
+  last_activity: '2026-10'
+  qa: none
+  notes: >-
+    Unreleased; known only from press coverage of test footage (players see each other's moves and can damage the same
+    enemy; NPC and enemy placement differs between the two worlds). No public build or code found 2026-10-19.
+  sources:
+  - https://wccftech.com/crimson-desert-2-player-co-op-mod-but-more-advanced-soon/
+  - https://insider-gaming.com/crimson-desert-multiplayer-mod-is-being-tested/
+  checked: '2026-10-19'
