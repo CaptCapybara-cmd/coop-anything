@@ -234,3 +234,66 @@ Derived:
 Limits (honest): one PC, one player, same save, one stage, one run. Not yet: a second PC/player, stages where host and guest
 are at different story points, quest/mission list deltas, rewards. Mutation counterpart already seen: a made-up branch
 (16:18) crashes the game.
+
+## 2026-10-19 17:08 — live stage sync over cdmp's network, one-PC echo test: PASS (2 genuine applications)
+Code: common/stage_sync.h (guest queue, unit-tested + mutation check: removing the retry wait fails tests.cpp:1067/1069),
+proto RelKind::StageBranch = 9 (u32 sequencer key | u32 branch | u16 flags, reliable), kVersion 10, mod/net/stage_tracker
+(shared instance<->key bookkeeping), mod/net/stage_sync ([coop] stage_sync=1; [dev] stage_sync_feed=1 = echo test feed).
+Observed (cdmp_peer --mode relay --delay 50, unattended, saves restored to the record/replay start point):
+- Feed of 3 recorded branches as the host's at in-world+20 s -> relay (86 reliable fragments, 0 dropped) -> guest half:
+  key 0xF4CB1 -> our instance 0x164, 0xF4CB5 -> 0x165, both sent at t=85.607 (first branch requests for them),
+  server OnBranch + Ack(state 1, branch 0) at t=85.615. Game still running 30 s later. Capture-verified.
+- Race found: the game's own branch of 0x163 (key 0xF4893, t=91.453, answered 91.512) came back through the echo and the guest
+  sent the same branch again at 91.515, before the tracker (sniffer writer thread, a few ms behind) saw the answer. Harmless
+  (identical branch) but the driver counted it as "applied 3". Fixed: a stage whose own branch request is unanswered is "busy"
+  and not touched (unit test added). Confirmation run below.
+Observed by the owner (watching the window): the echo copy of the player animates choppily and sometimes teleports.
+  Log: 4001 events replayed, clock offset 0 ms, nothing dropped on the link; 1584 of 3891 movement positions dropped as
+  repeats; test config uses coop delay_ms=1500 and offset 0.01 m. Cause unknown; cdmp's author also noted occasional teleports.
+- 17:12 confirmation run with the busy fix (same setup): sent 2, applied 2 (0xF4CB1 -> 0x164, 0xF4CB5 -> 0x165), the game's
+  own branches coming back through the echo counted as "reached by our game alone" (4) and not re-sent. Game alive 30 s later.
+  Unit tests pass (fresh binary). Limits: one PC, echo relay, same save on both "sides", first branch of a stage only.
+- 17:18 replay rework (all recorded branches through StageSyncQueue; quest list deltas recorded as "Q key state flag" and
+  used as the oracle): regression run on the ambient-stage recording, unattended: applied 2 (0xF4CB1 -> 0x163, 0xF4CB5 -> 0x164,
+  ids differ again), reached alone 21, PASS; alive 30 s later. No quest change in that recording, so the quest oracle is untested.
+
+## 2026-10-19 — where a bad branch is (not) validated (static)
+Observed:
+- StageBranchStateReq's handler calls exe+0x2891FB0, which has no .pdata entry: it is a single `jmp 0x1502D2B70` into .xtls
+  (RVA 0x75C9000, ~250 MB, characteristics 0xE0000020), followed by non-code bytes. The server-side branch logic is virtualized
+  (protector VM); not readable with plain disassembly. (tools/re/fn.py: .pdata-bounded single-function disassembly.)
+- The 16:18 crash site exe+0xAA1B4D is in a normal client function (0xAA1A10-0xAA1E5C) that indexes a branch table
+  ([[[r15+0x58]+0x38]+8] + branch*8) while handling the answer.
+Derived:
+- The server accepted the made-up branch and answered; the client then crashed applying it. A safety guard for stage sync must
+  therefore be client-side: read the stage's branch table (count/pointer) before sending, and refuse out-of-range branches.
+  Not built yet; same static key on both PCs should mean the same chart and branch set, so this matters for mismatched builds/data.
+
+## 2026-10-19 17:24 — stage sync echo test under a lossy link: PASS
+cdmp_peer --mode relay --delay 60 --loss 5 --jitter 40 (relay dropped 420 of 8518 packets, 4.9 %), unattended: all 3 fed
+branches arrived over the reliable channel (71 fragments), applied 2 (0xF4CB1 -> 0x163, 0xF4CB5 -> 0x164) 100 ms after the feed,
+own echoed branches reached alone 2, game alive 30 s later.
+
+## 2026-10-19 — the echo copy's stutter/teleports (separate read-only investigation, cdmp-puppet-findings.md, local)
+Summary of its findings (code refs checked here: inject_clock.h:27 kAheadMs=450; coop.cpp:121-124 echo offset only when offset_m==0):
+- Our test config caused much of it: delay_ms=1500 vs the 450 ms "ahead" clamp re-stamps every Move (timing margin pinned at
+  650 ms, ~40 % dropped as repeats, actions ~1 s behind positions); offset_m=0.01 disables the 2.5 m echo offset, so the copy
+  stands in the player and shoves them (player drifted ~25 m with no input after the copy spawned).
+- Real cdmp issue at default settings too: Moves arrive at ~83 Hz and are never thinned; the client's 30-sample interpolation
+  buffer overflows (offline model of the documented client algorithm: ~3700 evictions per run at delay 300), giving stall-then-
+  jump. The author's own proposal P2 (drop Moves < 22 ms apart) was never implemented; the model predicts 0 evictions with it.
+- Test settings changed back to delay_ms=300, offset_m=0. Fixes not implemented or tested yet; a live check needs a walking bot.
+
+## 2026-10-19 17:32-17:45 — copy stutter: Move thinning (author's P2) + walking bot: PASS
+Code: common/move_thinner.h (drop a player Move < 22 ms after the last kept unless first after a 150 ms gap, parent change or
+out of order; a dropped Move is held and sent after 60 ms of silence), unit tests + mutation check (removing the parent-change
+rule fails tests.cpp:1058); remote_puppet.cpp applies it to the player's Moves only ([coop] move_thin, default 1);
+test_input: [dev] test_walk_s (holds W 4 s / S 4 s via WM_INPUT + WM_KEYDOWN auto-repeat; ClipCursor/SetCursorPos are no-ops
+while focus is faked); net/puppet_motion: samples the copy's position ~every 20 ms, counts jumps (> 15 m/s) and
+stall-then-jump (still >= 150 ms, then > 10 m/s); 3 s warm-up added after run 1 showed the first-Move snap.
+Observed (echo relay, delay_ms 300, offset_m 0, 60 s of bot walking, unattended; the bot moves the player: 90-103 m per run;
+the game reads movement keys from window input, never GetAsyncKeyState):
+- move_thin=0: run 1 jumps 5 (first at +2.5 s) FAIL; run 2 jumps 14 + 1 stall-then-jump, max 83 m/s, FAIL.
+- move_thin=1: run 1 jumps 2, both in the first 0.3 s (first Move after rest) and 0 afterwards; 1945 Moves dropped as too
+  close, 3 held-and-released at stops. Run 2 (with warm-up): jumps 0, stall-jumps 0, max 9.8 m/s, copy 91.9 m vs walk 91.6 m: PASS.
+Limits: one PC, echo relay, flat walking only (no horse, climbing, combat), two runs per side.
