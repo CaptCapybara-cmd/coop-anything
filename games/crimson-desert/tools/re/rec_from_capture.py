@@ -1,5 +1,5 @@
 # Usage: rec_from_capture.py <capture.bin> <from s> <to s> : prints cdmp_stage_record.txt lines ("D op ms hex" for
-# quest dialog messages 2342/2621 the game sent, "M key kind state row" for mission rows new/changed, "N runtime static" per NPC in them, "KKKKKKKK branch flags" per stage branch the game chose) between the two
+# quest dialog messages 2342/2621 the game sent, "M key kind state row" for mission rows new/changed, "N runtime static" per NPC in them, "S key kind_before kind_after" per row whose kind changed, "KKKKKKKK branch flags" per stage branch the game chose) between the two
 # capture times. The mission list before <from> is the baseline. Same formats as cdmp stage_replay.
 import struct, sys
 REC = struct.Struct("<QBBHHHII")
@@ -21,7 +21,10 @@ while pos + REC.size <= len(data):
     if op == 3009 and len(p) >= 7 and (len(p) - 7) % 55 == 0:
         for i in range(7, len(p), 55):
             r = p[i:i + 55]; k = struct.unpack_from("<I", r)[0]
-            if rows.get(k) != r and ts >= lo: print(f"M {k:08X} {r[4]} {r[5]} {r.hex().upper()}")
+            if rows.get(k) != r and ts >= lo:
+                print(f"M {k:08X} {r[4]} {r[5]} {r.hex().upper()}")
+                before = rows[k][4] if k in rows else 0
+                if before != r[4]: print(f"S {k:08X} {before} {r[4]}")
             rows[k] = r
     elif op in (2342, 2621) and d == 1 and ts >= lo:  # 1 = C>S
         first = ts if first is None else first

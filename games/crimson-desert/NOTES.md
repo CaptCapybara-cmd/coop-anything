@@ -570,3 +570,35 @@ Observed (log + capture, t = s since the capture started):
 Derived: a guest who never met the NPC and got the request only by replay can cook and hand it in; the server completes
 it. Accept by replay + hand-in by the player = "each player completes their own, same request".
 Owner's own account (15:25): the quest completed and the reward looked right.
+
+## 2026-10-20 15:40 — CORRECTION: branch 6 does not open the shop; plan for live accept sharing
+- Withdrawn: "branch 6 opened the shop screen on the guest" (15:00 section, S1). StoreDataListAck (shop contents) in the
+  captures: at load (t~14, ~28) in every run; in S1 also at t=236, ~170 s after branch 6, while the scene was stuck
+  after its first branch; never in S2, S3 or the owner's hand-in session, where all four branches ran. The owner's own
+  meeting (12:42) had none around branch 6 either (shop data at t=270, after the accept). Cause of the S1 shop screen:
+  unknown (the stalled scene is the likely link).
+- Hand-in vs accept on the host: the hand-in (15:15 session) came with RemoveItemToInventoryAck 2481 x2 and
+  UseItemReq 2855 right after the answer; the accept (12:42) had no item removal, only additions. One sample each.
+- Share policy (owner, 2026-10-20): request quests are accepted together (the guest gets the host's accept, including the
+  meeting scene through stage sync, so the NPC is known); each player cooks and hands in their own; hand-ins and rewards
+  are not shared. Note the effect-capture page's warning applies on purpose here: the guest's server runs its own accept,
+  so the guest also gets the recipe and ingredients, which the policy wants.
+- Upstream tool tests (tools/test_all.py, after merging main; cmake 3.31.6 from PyPI, hash-pinned, in a workspace venv):
+  9 of 11 pass; gamepool exits 2 because it skips on Linux ("needs Windows") and the runner counts that as a failure;
+  bots fails test_specific_reasons on message wording ("'copies' not found in 'round 2: item count in the party is
+  wrong ...'"). Neither touches Crimson Desert files.
+
+## 2026-10-20 15:50 — live quest accept sharing (protocol 11), one-PC relay test: PASS
+Code (cdmp): common/quest_accept.h (QuestAcceptMsg wire format; host AcceptDetector: an answer followed within 400 ms
+by mission kind changes and no RemoveItemToInventoryAck = accept, with removal = hand-in, not shared; GuestAcceptQueue:
+wait for the NPC by static key, our player id and the host's "before" kinds, send obstacle on x2 / answer / off x2,
+verify the "after" kinds, never twice; already there = skip). Unit tests + 4 mutation twins (hand-in shared, no before
+check, no already check, NPC id kept: each fails a test). mod/net/quest_share ([coop] quest_share, [dev]
+quest_share_feed), RelKind::QuestAccept = 10 (host -> guest only), protocol 11. Strict record-file branch lines
+(parse_branch_line): a loose "%x" had read "D 2621 ..." as stage key 0xD (5 made-up branches queued in the first run,
+held because no such stage; a made-up branch can crash the game). Its mutation twin was NOT caught (the trailing-text
+check also rejects those lines): two guards, one test.
+Observed (cdmp_peer relay, one PC, saves restored, harness/echo_quest_test.sh): the stage feed's meeting scene applied as
+6, 0, 3, 1 on our instance 0x19F; the accept arrived, was sent to our server (5 messages) and verified (accepted 1);
+host-side detector counted 0 accepts (our injected answer is not taken for our own: no echo loop); game alive 30 s after.
+Not yet: two PCs; a guest far from the NPC (the wait); hand-in by a guest after a live accept.
