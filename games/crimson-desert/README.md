@@ -5,15 +5,19 @@
 | Engine | BlackSpace Engine (Pearl Abyss, in-house) |
 | Versions tested | Steam build 25477059, `CrimsonDesert.exe` 1.0.0.2976 (game version 2.03.02), PE timestamp `0x6AB28F00`, SHA-256 `57da440d72f4db974f25fef047cf84c4dadd999a88cb2a3c5af4c9bd67fde1e7`; Linux, Proton Experimental |
 | Projects | [cdmp (ByJunter)](https://github.com/ByJunter/CrimsonDesertMultiplayer), [CrimsonDesertCoop (blizz3010)](https://github.com/blizz3010/CrimsonDesertCoop), unreleased mod by No-Context2224; see the three Crimson Desert rows in [DIRECTORY.md](../../DIRECTORY.md) |
-| QA level | none |
+| QA level | none (one-PC tests only) |
 | Last updated | 2026-10-19 |
 
 ## Where things stand
 
 Two players can see each other and fight the host's nearby enemies with ByJunter's cdmp alpha, but the story is not
 shared: each player stays in their own save. This folder documents a revival of cdmp aimed at shared quest progress
-(claim: [cranebeaker/coop-anything#51](https://github.com/cranebeaker/coop-anything/issues/51)). So far: cdmp builds
-on Linux, runs under Proton, and the quest/stage messages are mapped; nothing quest-related is synced yet.
+(claim: [cranebeaker/coop-anything#51](https://github.com/cranebeaker/coop-anything/issues/51)). So far:
+- cdmp builds on Linux and runs under Proton;
+- the quest/stage messages are mapped;
+- an experimental stage sync applies the host's quest stage branches on the guest. It passed one-PC tests through
+  cdmp's echo relay, but has not been tried between two PCs, and it is not yet shown to move a real quest forward;
+- the other player's copy no longer jumps while walking (Move thinning).
 
 ## Existing work
 
@@ -55,29 +59,46 @@ on Linux, runs under Proton, and the quest/stage messages are mapped; nothing qu
 
 ## What we changed
 
-- **clang-cl build fix** in cdmp (`src/common/enemy_zone.h`): clang rejects a default argument that needs a nested
-  struct's member initializers inside the enclosing class; split into two constructors. Branch
-  [`fix/clang-cl-build`](https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer/tree/fix/clang-cl-build).
-  Test: builds with clang-cl 19 + xwin; `cdmp_tests.exe` prints "All tests passed" under Proton's Wine.
-- **Dev test tooling** on branch
-  [`dev/quest-stage-tests`](https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer/tree/dev/quest-stage-tests),
-  all off by default (`[dev]` keys):
+All on branch [`dev/quest-stage-tests`](https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer/tree/dev/quest-stage-tests)
+of the revival fork (on top of [`fix/clang-cl-build`](https://github.com/CaptCapybara-cmd/CrimsonDesertMultiplayer/tree/fix/clang-cl-build)).
+
+- **clang-cl build fix** (`src/common/enemy_zone.h`): clang rejects a default argument that needs a nested struct's member
+  initializers inside the enclosing class; split into two constructors.
+- **Quest stage sync** (`[coop] stage_sync=1`, off by default; protocol v10):
+  - the host sends each stage branch its game chooses (`StageBranchStateReq`), named by the stage's static sequencer key;
+  - the guest applies it to its own instance of that stage when it is waiting there.
+  - Only branches a real game chose are sent: a made-up branch number crashes the game.
+  - Rules and tests: `src/common/stage_sync.h`.
+- **Move thinning** (`[coop] move_thin=1`, on by default): the other player's Moves are cut to about 40 Hz, the cdmp
+  author's own proposal. Without it, the client's 30-sample buffer overflowed and the copy stalled and jumped.
+- **Dev test tooling** (`[dev]` keys, all off by default):
   - `test_autoload` / `test_autoquit`: the mod presses E inside its own game window until the world loads, and closes the
-    game without saving when a test ends. The title and menus react to `WM_KEYDOWN`/`WM_CHAR`, not to Raw Input.
-    Entered the world unattended in 3 of 3 runs after that change.
-  - `stage_record` / `stage_replay`: records the stage branches the game itself chooses, keyed by the stage's static
-    sequencer key (`PrepareSequencerAck`), and replays the first one onto the local instance in a later session.
-  - `stage_force_test`: kept as the mutation case. `StageChartForceBranchDevReq` is a stub; a made-up branch sent with
-    `StageBranchStateReq` crashes the game.
+    game without saving when a test ends. The menus react to `WM_KEYDOWN`/`WM_CHAR`, not to Raw Input.
+  - `test_walk_s`: walks the player back and forth. The mouse is left alone (`ClipCursor`/`SetCursorPos` do nothing).
+    A motion meter logs `Puppet motion: RESULT` for the copy.
+  - `stage_record` / `stage_replay`: records the stage branches and quest changes of one session, and replays the branches
+    on a fresh load. The recorded quest changes are the pass/fail check.
+  - `stage_sync_feed`: the one-PC test of stage sync through `cdmp_peer`.
+  - `stage_force_test`: the mutation case (stub dev request, made-up branch).
 
 ## QA
 
-- No automated two-player test exists yet. Checks that ran are listed with dates in [NOTES.md](NOTES.md).
-- One-PC record/replay, unattended (2026-10-19): record session 3 stage keys; replay session mapped key 0xF4CB1 to
-  instance 0x164, server answered state 1 / branch 0 in 9 ms, the game continued from it by itself, no crash in 30 s.
-  One player, one save, one stage: groundwork for host-to-guest stage sync, not co-op yet.
-- One-PC echo smoke test under Proton (cdmp's `cdmp_peer --mode relay`): hooks installed, overlay drew 15k+ frames,
-  echo copy spawned, 500+ events replayed with 0 rejected. A person moved the character; nothing asserted automatically.
+QA level stays **none**: every check so far ran on one PC, and there is no two-player test yet. All runs below were
+unattended. Details and dates are in [NOTES.md](NOTES.md).
+
+- Unit tests (`cdmp_tests.exe` under Proton's Wine): all pass, including stage-branch message, sync queue and Move thinner.
+  Mutation checks: removing the queue's retry wait or the thinner's parent-change rule makes the suite fail.
+- Record/replay by static key: a branch recorded in one session was applied to a different instance id in the next.
+  The server answered in 9 ms, and the game carried on from it.
+- Stage sync through `cdmp_peer`:
+  - 2 of 2 fed branches applied to this world's own stages, no crash;
+  - after a race fix, the game's own echoed branches are no longer re-sent;
+  - again PASS with 5 % packet loss and 40 ms jitter.
+- Walking copy, 60 s of bot walking per run:
+  - without thinning: 5 and 14 jumps;
+  - with thinning: 0 jumps after warm-up in both runs, max 9.8 m/s, copy distance equal to the walk.
+  - running (Shift held): about one small jump or stall per minute with or without thinning, so no measurable effect there.
+- Autoload into the world: 3 of 3 runs after the `WM_KEYDOWN` change.
 
 ## How to play
 
@@ -88,18 +109,19 @@ smoke test above). Back up saves; do not save while the other player is in your 
 ## Known issues
 
 - Story, NPCs, quest progress and loot are per player; only hostile enemies near the host are shared.
+- Stage sync applies only a stage's first branch, needs both players to have the same stage in their world, and is
+  untested between two PCs.
 - Works on one game build only; any patch disables it until offsets are updated.
-- One crash on Proton while opening the menu (vkd3d-proton `VK_ERROR_DEVICE_LOST`) right after the stage test
-  injected a request; not reproduced in 5 menu openings without it. Treated as unknown.
+- One crash on Proton while opening the menu (vkd3d-proton `VK_ERROR_DEVICE_LOST`) right after a stub request was injected;
+  not reproduced since. Treated as unknown.
 
 ## Next steps
 
-1. Send the host's stage branches (by sequencer key) over cdmp's network and replay them on the guest, first with
-   cdmp's echo relay on one PC, then on two PCs.
-2. Handle stages that exist on one side only (players at different story points).
-3. Relay host quest/mission deltas to the guest, then decide per quest whether to replay branches or only show
-   the host's objective.
-4. Extend the in-game bot from loading the save to moving the player, so branches that need the player can be recorded.
+1. Record a real quest step (needs one human-played session), then replay it unattended and compare the quest changes.
+2. A two-PC session with stage sync on.
+3. A client-side guard that reads a stage's branch table before sending, so a mismatched branch is refused.
+4. Players at different story points; later branches of a stage; quest rewards for the guest.
+5. Walk bot: climbing and riding; find the cause of the small residue when running.
 
 ## Tools in this folder
 

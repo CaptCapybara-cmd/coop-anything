@@ -297,3 +297,23 @@ the game reads movement keys from window input, never GetAsyncKeyState):
 - move_thin=1: run 1 jumps 2, both in the first 0.3 s (first Move after rest) and 0 afterwards; 1945 Moves dropped as too
   close, 3 held-and-released at stops. Run 2 (with warm-up): jumps 0, stall-jumps 0, max 9.8 m/s, copy 91.9 m vs walk 91.6 m: PASS.
 Limits: one PC, echo relay, flat walking only (no horse, climbing, combat), two runs per side.
+
+## 2026-10-19 — client branch table (for a future guard), static
+Observed (client fn 0xAA1A10-0xAA1E5C, normal code):
+- Same pattern as the server side: lock on [mgr+8], then stage lookup exe+0x1F6C190(mgr, &out, instance) -> stage object (r15).
+- Branch pointer = [[[stage+0x58]+0x38]+8][branch]: the chart object ([stage+0x58]+0x38) holds a {data ptr, u32 count} vector at
+  +8, so the count is at chart+0x10 (same {data, count} layout is read at [[r13+0x50]+0x10]/+0x18 a few lines later).
+  For stage 0x58 (16:18 crash) the data pointer was null: that stage has no branch table, so any branch crashes.
+Derived: a guard is `data != null && branch < count`. Not built: it needs the client stage manager + lock to call the lookup
+from the mod, and it only matters if the two games' data differ, which cdmp already rules out (same build, same mod version).
+
+## 2026-10-19 17:51-18:03 — running (Shift held) with and without thinning
+Observed (echo relay, delay 300, unattended, 60 s runs; Shift+W/S covers 218-333 m vs ~90 m walking, so Shift does run):
+- First pair, old meter (GetTickCount64 timing, speed-only jump rule): 20 vs 17 "jumps". The thinned run's were all
+  0.34-0.56 m per ~22 ms: 2-3 game frames at a run timed with a ~16 ms clock, i.e. meter noise; the unthinned run also had
+  real ones (1.11, 0.83, 1.81 m).
+- Meter fixed (QueryPerformanceCounter timing; a jump must also exceed 0.75 m): move_thin=0 jumps 1 (1.13 m) + 1 stall-then-jump
+  (0.23 m after 171 ms); move_thin=1 jumps 1 (0.88 m) + 1 stall-then-jump (0.25 m after 193 ms). Both "FAIL" by the strict rule.
+Derived: at a run, thinning makes no measurable difference; about one small event per minute remains either way, not tied to
+starting or stopping. Walking results above were measured with the old meter, but their jumps were 0.5-1.8 m (baseline)
+vs none (thinned), so they stand. Cause of the running residue: unknown.
