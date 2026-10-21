@@ -6,7 +6,7 @@
 | Versions tested | Steam build 1037023, `Gothic3.exe` 1.75.20108.14 (Community Patch 1.75.14), x86, with Parallel Universe Patch files present |
 | Projects | [G3 Together](https://github.com/GGM1k3y23/g3-together) (own mod, built from zero on the SDK, GPL-3.0-or-later; work in progress, human review pending). Earlier projects: [OTHER-PROJECTS.md](OTHER-PROJECTS.md) |
 | QA level | automated (bot suites with two real game clients on one PC, each stage 3 passes plus a failing negative control) |
-| Last updated | 2026-10-19 |
+| Last updated | 2026-10-21 |
 
 ## Where things stand
 
@@ -75,12 +75,16 @@ not confirmed at runtime). Addresses and decompiled code stay private.
 - Weapon touch damage, the AI combat loop and `gCEntity::DoDamage` all end in the
   `AddHitPoints` script. In a 45 s raid probe, 225 of 236 calls were weapon touch damage;
   the swapped `DoLogicalDamage` entry was never called. Wrapping `AddHitPoints`
-  (negative amounts) is the one place to enforce who decides a hit.
-- The hit judgement (`OnDamage` / `AssessHit`) only records the damage; hit points drop
-  afterwards. It caps the damage of any attacker but the player, so only the player's
-  hits reach the death branches. Calling `gCEntity::DoDamage` from a mod raised an
-  exception. Outcomes that `Script_Game.dll` applies by calling `AddHitPoints` directly
-  (parries, perks) bypass the admin: unknown whether that matters.
+  (negative amounts) is where weapon and spell hits are decided, but it is not the only
+  way to damage or death (static analysis): `OnTick` applies poison and burn damage by
+  calling `AddHitPoints` directly, past the script table; `AssessHit` can schedule a death
+  before `AddHitPoints` runs; `RagdollDead` sets hit points to 0 itself.
+- The hit judgement (`OnDamage` / `AssessHit`) records the damage, and hit points drop
+  afterwards in `AddHitPoints`. It caps the damage of any attacker but the player, so only
+  the player's hits reach the death branches. Calling `gCEntity::DoDamage` from a mod
+  raised an exception. Other outcomes that `Script_Game.dll` applies by calling
+  `AddHitPoints` directly (parries, perks) also bypass the admin: unknown whether that
+  matters.
 - A remote player's body must have collision on, or no weapon ever touches it.
 - The `Kill` script does the bookkeeping of a death: quest `OnNPCKilled`, experience
   through `GiveXP` (paid only while `gCNPC_PS::DefeatedByPlayer` is unset, then set),
@@ -150,10 +154,14 @@ Nothing in the game files. G3 Together is a new mod, written from zero.
   controller and showing the player's weapons, stance and swings.
 - Every NPC has one owner, the machine that simulates it: near the host the host, far
   from the host the client that processed it first. Others mirror it; all AI states of a
-  mirror are wrapped so it only runs an idle task.
+  mirror are wrapped so it only runs an idle task. `OnTick`, which is a callback and not an
+  AI state, is skipped on mirrors and puppets separately (commit `2a9e983`).
 - One hit rule on every machine, enforced in `AddHitPoints`: a hit is decided by the
   owner of its target; hits caused by puppets or mirrors are dropped; a hit on another
-  player's puppet goes to that player and is judged against the real hero there.
+  player's puppet goes to that player and is judged against the real hero there. Paths
+  that bypass `AddHitPoints` need their own guard: copies of area spells owned by a
+  puppet run no area damage at all (`5628884`, after a Hailstorm copy had judged a death
+  before the filter).
 - The host keeps the ledger: quests, told dialogs, story events, dialog results, item
   claims, chest/corpse/trade transactions, kill-quest counts, the clock and a journal of
   deaths. The journal is saved next to the host's save as `<save>.g3t`.
@@ -176,8 +184,14 @@ clients plus a negative control that fails)
 | Items | 5, 5b, 5c | Ground items, chests, corpses and trade are host transactions; the first claim wins; a refused take is undone | Bot trades through script calls, not the trade screen |
 | Saves and time | D1, D2, D3, G, G2 | Saves remove puppets first; per-player hero record; joining gets the host's campaign over the network; one clock; a sleep moves time on for everyone | Menu save path assumed to use the hooked function; real bed dialog not bot-driven |
 
-P1 (meteor) was merged into `master` on 2026-10-19 but is not yet in the mod's stage
-table.
+Since then the mod's stage table (at `master` `d0cdb38`, 2026-10-21) also lists as
+passing: P1 (meteor summon), P2 (arrows and bolts flown as copies on the other machine;
+"an arrow that hits counts once"), P2f (fireball) and HO (heal the other player). The
+runs behind P2 and P2f are in [RUNTIME-QA-G3TOGETHER.md](RUNTIME-QA-G3TOGETHER.md); for P2
+the bot's arrows rarely reach the target, so exactly-once has 3 green runs of 5, not three
+in a row, and none for bolts. Further additions on `master` (NPCs fight back against the
+client, shared doors and locks, NPC spells, summoned creatures, town reputation) are in
+[NOTES.md](NOTES.md) and the mod's commit history, not yet in this table.
 
 **Test harness** (part of the mod repository, `qa/`)
 
@@ -213,6 +227,9 @@ Last results (2026-10-19, details and run IDs in
 | Merged `master` `dff5cfa` | `stageP1`, `stageP3a`, `stageL` passed; a full regression on it had started and its result is unknown here |
 | Soak, 2026-10-18 (older build) | 22 min, 320 random actions; then 55 min, 738 actions incl. 75 loads: no failed action, no crash, memory levels off |
 
+The 2026-10-20 runs (P2 arrows, P2f fireball, the puppet-turn fix, summoned creature
+lifetime) are in [RUNTIME-QA-G3TOGETHER.md](RUNTIME-QA-G3TOGETHER.md#results-2026-10-20).
+
 ## How to play
 
 G3 Together has no public release yet. The owner hands a player package (DLL, example
@@ -225,20 +242,48 @@ UDP port; that path is untested. Do not mix it with another co-op DLL in `script
 
 ## Known issues
 
-- Bows and spells: arrows and projectiles exist only on the shooter's machine; the other
-  player does not see them. A client's bot arrows and fireballs did not hit; a client's
-  meteor did. Long-lived summons (skeleton, golem) are not handled.
-- Fixed on 2026-10-19: orcs the host killed stood upright on the client (the mirror got
-  the death task but no death motion). Now 12 of 12 lie; only orcs were tested, other
-  species are unknown.
-- Rarely (1 of 15 runs on one build) the client's puppet ran the game's `ZS_HangAround`
-  task on the host for about 2 s and turned on the spot after staggering. Cause unknown.
+State of the mod's `master` `d0cdb38` (2026-10-21): its player guide's known problems
+plus the static findings in [NOTES.md](NOTES.md). Static findings are marked; they were
+read from code and archived logs, not reproduced at runtime.
+
+- Crashes: the game can still crash in a fight or shortly after an enemy dies. The known
+  crash in the orc raid (`Entity::AttachTo`, an invalid vtable read) has a guard since
+  `5bea542`; others are not ruled out. One host crash executed data inside `Game.dll`
+  right after a test-bot teleport (seen once, cause unknown).
+- Bows and spells: the other player now sees arrows, bolts and fireballs fly as copies,
+  and a fireball that hits counts once. The test bot's arrows often do not reach the
+  target in the village, so "an arrow that hits counts once" has 3 green runs of 5, not
+  three in a row, and is not shown for bolts.
+- Summoned creatures freeze on the other machine when the players move more than about
+  40 m apart, because the creature's end is only sent with movement. Its suite passed
+  anyway: it does not fail on a frozen copy (fix planned, see NOTES).
+- A controlled or tamed NPC (Word of Control, taming) does not follow reliably. Static:
+  a host takeover leaves the client's old claim, and a failed takeover leaves a delayed
+  Follow task.
+- Stun and hypnosis cast by the client go through the host and may not take effect.
+- Poison and disease are not fully visible on the other machine, stamina is not sent at
+  all, and the experience for a poison kill can be missing.
+- Town reputation is shared, but a guard can still blame or chase the wrong player.
+  Static: a dialog hold can be overwritten by a second player and released by the wrong
+  one.
+- Static: restoring a player's own hero adds its skills to those already in the loaded
+  campaign instead of replacing them, so a joining client's hero can keep skills the
+  host's hero learned.
+- The partner's puppet can trail briefly under hits or play a motion imprecisely. One
+  case is open: a client running under orc hits, the puppet walks 1 to 2 m behind. The
+  rare puppet turn (`ZS_HangAround` after a stagger) is fixed since `a4da3aa`.
+- After a join, enemies or companions can act differently on the two machines.
+- Using the same campfire, seat or other workplace at the same time can hold a player.
 - Sideways combat steps sometimes show as standing on the other machine; mirrored NPC
   positions are off by about 60 cm (median), up to about 3 m.
 - How an NPC treats a remote player follows the hero of the machine that simulates it
   (its crimes and fame).
 - Companions are matched to players by name after a load; changing the name loses them.
   If the host loads another save mid-game, clients must leave and join again.
+- Fixed on 2026-10-19 (`9acdaf5`): orcs the host killed stood upright on the client (the
+  mirror got the death task but no death motion). Now 12 of 12 lie; only orcs were tested,
+  other species are unknown. The first P2 arrow runs still showed standing orcs because
+  their commit `ce6c5c7` predates the fix.
 - Not checked: fights, saves and death while transformed; monsters hitting a downed
   hero; robbing a downed hero; the real trade screen and bed dialog; more than two
   players; real internet play.
@@ -246,8 +291,13 @@ UDP port; that path is untested. Do not mix it with another co-op DLL in `script
 ## Next steps
 
 - Collect the bugs from the owner's human sessions first; they take priority.
-- Use the runtime trace on the standing dead orcs and the rare puppet turn.
-- Bows and spells for the watcher (replay the shot on the puppet without its result),
-  long-lived summons, identity checks (guards, crimes, party).
-- Test whether a friendly NPC hit by a remote player fights back.
+- Summoned creatures: send their end reliably, and make `stageCreatureLife` fail on a
+  frozen copy.
+- Arrows: a test shooter that reaches its target, then three green `stageP2hit` runs in a
+  row, also with bolts.
+- Identity checks: guards and crimes per player, dialog holds, Word of Control and
+  taming, the exact hero restore.
+- Check whether `ContinueRoutine` and the other wrapped scripts have direct native
+  callers that the script-table wrappers miss; hooking them in place, as for `Shoot`,
+  covers both.
 - Internet play, then a longer human playthrough, then a first release.
