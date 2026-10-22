@@ -826,6 +826,9 @@ TWINS = [
     (check_environment_is_cleaned, "env_not_cleaned", tw_env_not_cleaned),
     (check_msvc_environment, "vcvars_ignored", tw_vcvars_ignored),
 ]
+# Twins whose check only exercises the mutated code on Windows (check_msvc_environment returns
+# early elsewhere): skipped, not counted, on other systems.
+WINDOWS_ONLY_TWINS = {"vcvars_ignored"}
 
 
 def final_sweep():
@@ -854,6 +857,9 @@ def main():
             finally:
                 undo()
         for fn, name, mut in TWINS:
+            if name in WINDOWS_ONLY_TWINS and os.name != "nt":
+                print("skip   twin %s[%s] (Windows only)" % (fn.__name__, name), flush=True)
+                continue
             n_twin += 1
             try:
                 fn(mut)

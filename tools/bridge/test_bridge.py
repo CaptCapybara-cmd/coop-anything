@@ -233,22 +233,27 @@ class ErrorTests(Base):
     def test_calls_from_two_threads_do_not_mix_replies(self):
         g = self.game()
         b = self.client(g)
-        g.faults["exec"] = {"kind": "delay", "seconds": 0.25, "once": True}
-        out = {}
 
-        def run(key, text):
+        def run(out, key, text):
             try:
                 out[key] = b.call("exec", {"cmd": "say " + text}, timeout_s=3)["output"]
             except bc.BridgeError as e:
                 out[key] = repr(e)
-        a = threading.Thread(target=run, args=("a", "alpha"))
-        a.start()
-        time.sleep(0.08)
-        c = threading.Thread(target=run, args=("b", "beta"))
-        c.start()
-        a.join(10)
-        c.join(10)
-        self.assertEqual(out, {"a": "alpha", "b": "beta"})
+        # Without the call lock the threads read the same socket and the OS decides who gets the slow
+        # first reply; one round caught that only about half the time (the no_call_lock twin was
+        # missed 1 run in 3 on Linux). Eight rounds of three threads miss it about 0.015 % of the time.
+        for rnd in range(8):
+            g.faults["exec"] = {"kind": "delay", "seconds": 0.25, "once": True}
+            out = {}
+            first = threading.Thread(target=run, args=(out, "a", "alpha%d" % rnd))
+            first.start()
+            time.sleep(0.08)
+            rest = [threading.Thread(target=run, args=(out, k, "%s%d" % (t, rnd))) for k, t in (("b", "beta"), ("c", "gamma"))]
+            for t in rest:
+                t.start()
+            for t in [first] + rest:
+                t.join(10)
+            self.assertEqual(out, {"a": "alpha%d" % rnd, "b": "beta%d" % rnd, "c": "gamma%d" % rnd})
 
 
 class ConnectTests(Base):

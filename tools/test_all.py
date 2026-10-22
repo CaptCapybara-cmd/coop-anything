@@ -3,7 +3,9 @@
     python -I tools/test_all.py            run every suite
     python -I tools/test_all.py chaos bots run only these
 
-A suite counts as passed only if it exits 0 AND its last output line is ALL OK.
+A suite counts as passed only if it exits 0 AND its last output line is ALL OK. A suite that
+exits 2 after printing a line starting with SKIPPED (gamepool on anything but Windows) is
+reported as SKIP and does not fail the run; the summary names it.
 The C++ suites build with CMake and need a C++17 compiler (Visual Studio 2022 on Windows).
 """
 import os
@@ -29,6 +31,9 @@ def run(name):
     lines = [l.strip() for l in (p.stdout or "").splitlines() if l.strip()]
     ok = p.returncode == 0 and bool(lines) and lines[-1] == "ALL OK"
     note = f"{time.time() - t:.0f}s"
+    skipped = p.returncode == 2 and any(l.startswith("SKIPPED") for l in lines)
+    if skipped:
+        return None, note + ", " + next(l for l in lines if l.startswith("SKIPPED"))
     if not ok:
         tail = "\n".join(((p.stdout or "") + (p.stderr or "")).splitlines()[-15:])
         note += f", exit {p.returncode}\n{tail}"
@@ -37,15 +42,19 @@ def run(name):
 
 def main():
     names = sys.argv[1:] or SUITES
-    failed = []
+    failed, skipped = [], []
     for name in names:
         ok, note = run(name)
-        print(f"{'PASS' if ok else 'FAIL'}  {name}  ({note})", flush=True)
-        if not ok:
+        print(f"{'SKIP' if ok is None else 'PASS' if ok else 'FAIL'}  {name}  ({note})", flush=True)
+        if ok is None:
+            skipped.append(name)
+        elif not ok:
             failed.append(name)
     if failed:
         print("FAILED: " + ", ".join(failed))
         sys.exit(1)
+    if skipped:
+        print("skipped on this system: " + ", ".join(skipped))
     print("ALL OK")
 
 

@@ -67,8 +67,11 @@ class LootRacePlaybook(Playbook):
                 winners = [n for n, r in res.items() if r]
                 ctx.expect(len(winners) == 1, "round %d: expected one winner, got %s" % (rd, winners or "none"))
                 ctx.settle()
-                ctx.expect(total_held(ctx, base) == total0 + 1,
-                           "round %d: item count in the party is wrong (%d after, %d before the race)" % (rd, total_held(ctx, base), total0))
+                after = total_held(ctx, base)
+                # Same wording as the first grab: which round shows a duplicate depends on the timing of the race.
+                ctx.expect(after == total0 + 1,
+                           "round %d: %d copies of %s appeared in the party (must be exactly 1; %d after, %d before the race)"
+                           % (rd, after - total0, base, after, total0))
             return body
 
         ctx.run_step("everyone stands at the item", walk_to_item, arrange=arrange_race)

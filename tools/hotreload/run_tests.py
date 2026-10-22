@@ -67,7 +67,9 @@ def tail(p, n=25):
 
 def main():
     if os.name != "nt":
-        fail("the hot reload tool swaps DLLs in a running Windows process; its tests run on Windows only")
+        # Same convention as gamepool: tools/test_all.py reports it as SKIP, not as a failure.
+        print("SKIPPED: the hot reload tool swaps DLLs in a running Windows process; its tests run on Windows only")
+        sys.exit(2)
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-dir", default=os.environ.get("COOP_BUILD_DIR"))
     ap.add_argument("--arch", default="", help="x64 or Win32 (default: the generator's default)")
