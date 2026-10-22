@@ -657,3 +657,8 @@ lock from the mod's thread (deadlock/crash risk, untestable without a crash). Re
 Two-PC kit: cdmp `scripts/package_coop.sh` (Linux twin of package_coop.ps1) -> dist/cdmp-coop-<date>.zip with both configs set
 to stage_sync=1 + quest_share=1 and an English test plan (kit/coop/TEST-QUESTS.md). Not to be handed out before the relay
 re-test above passes.
+- 2026-10-22 in-game re-run with protocol 12 (story log + datagram CRC), cdmp_peer relay, one PC, saves restored
+  (harness/echo_quest_test.sh): the stage feed sent 4 branches (the strict parser no longer reads "D ..." lines as
+  branches), all 4 applied on our instance 0x1A2, 0 pending; the accept arrived as a story entry, was sent (5 messages)
+  and verified (accepted 1); game alive 30 s after; the relay rejected no datagram. RESULT PASS x4. The two-PC kit built
+  from this build is cleared for a human test.
