@@ -2,6 +2,10 @@
 # One-PC relay test of quest accept sharing: cdmp_peer relays everything back; the stage and
 # quest feeds send a recorded meeting scene + accept as the "host's", the guest half applies them.
 # Usage: echo_quest_test.sh <workspace root> <name> [feed file in save-backups/renee-record]
+# Layout under the workspace root: harness/ (run_game.sh, echo_test.sh, this script), testinst/game and
+# testinst/compatdata (the test copy, see run_game.sh), testinst/save-backups/before-record (the save restore
+# point), testinst/save-backups/cdmp.ini.before-human-record (the base cdmp.ini), testinst/save-backups/renee-record
+# (replay files built with tools/re/rec_from_capture.py). Never point it at a real install or its saves.
 W=$(realpath "$1"); name=$2; feed=${3:-share_feed.txt}
 G=$W/testinst/game/bin64; S="$W/testinst/compatdata/pfx/drive_c/users/steamuser/AppData/Local/Pearl Abyss/CD/save"
 out=$W/testinst/save-backups/echo-$name; mkdir -p "$out"

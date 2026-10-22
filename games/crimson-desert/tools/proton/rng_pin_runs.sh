@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Unattended: replay the recorded quest accept with the server rand state pinned, once per value given.
 # Usage: [REPLAY_FILE=name in save-backups/renee-record] [EXTRA_INI="k=v;k=v"] rng_pin_runs.sh <workspace root> <name=rng value> ...   (rng 0 = no pin)   Saves restored before and after every run.
+# Layout under the workspace root: harness/ (run_game.sh, echo_test.sh, this script), testinst/game and
+# testinst/compatdata (the test copy, see run_game.sh), testinst/save-backups/before-record (the save restore
+# point), testinst/save-backups/cdmp.ini.before-human-record (the base cdmp.ini), testinst/save-backups/renee-record
+# (replay files built with tools/re/rec_from_capture.py). Never point it at a real install or its saves.
 W=$(realpath "$1"); shift
 G=$W/testinst/game/bin64; S="$W/testinst/compatdata/pfx/drive_c/users/steamuser/AppData/Local/Pearl Abyss/CD/save"
 restore() { rsync -a --delete "$W/testinst/save-backups/before-record/" "$S/" && diff -rq "$W/testinst/save-backups/before-record" "$S" >/dev/null; }

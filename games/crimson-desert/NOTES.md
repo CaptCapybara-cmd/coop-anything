@@ -69,7 +69,7 @@ Observed (from cdmp docs/research/data/troc_messages_2976.csv, the mod's table o
 - cdmp already injects C->S cheat Reqs successfully (KillCheatReq, VaryStatCheatReq), so the injection path exists.
 Guesses (untested, label: guess):
 - "Story follows the host": sniff host's quest/mission/stage list Acks, send deltas to the guest, guest injects CompleteQuestByCheatReq for quests the host finished.
-  Risk: cheat completion may skip rewards/flags like KillCheatReq skipped XP (see cdmp pendiente-recompensas-progreso.md). Test only on a copied save; never save the owner's real slot.
+  Risk: cheat completion may skip rewards/flags like KillCheatReq skipped XP (see cdmp pendiente-recompensas-progreso.md). Test only on a copied save; never save to the real install's slots.
 - Cutscenes: host's StageGameEventAck / sequencer start could trigger ForcePlayStageSequencerDevReq on guest. Unknown if it plays outside the right world state.
 Unknown:
 - Payload formats of all of the above (need captures with [sniffer] record=1 and/or disassembly of the serializers).
@@ -184,7 +184,7 @@ Setup: cdmp + new test_input.cpp ([dev] test_autoload=1: in-process Raw Input sy
 answered by a GetRawInputData hook, GetAsyncKeyState/GetForegroundWindow/GetFocus faked only during autoload;
 [dev] test_autoquit=1). Stage test with opcode 2436 (StageBranchStateReq, 14-byte payload).
 Observed:
-- Autoload: Enter every 4 s from 15 s after the window appeared; the world started loading after 14 presses, BUT the owner
+- Autoload: Enter every 4 s from 15 s after the window appeared; the world started loading after 14 presses, BUT a human
   entered the world by pressing E (the game's confirm key on the title/menu). So this run had human input, and whether the
   synthesized Raw Input reaches the game at all is unknown (Enter may just do nothing there).
 - Negative control PASS (made-up instance 0x7FFFFFF0, no answer, no crash).
@@ -207,12 +207,12 @@ Observed (two runs, nobody touched the window, test_autoquit closed the game eac
   also with a real keyboard hDevice from GetRawInputDeviceList (run 2). World never started loading: RESULT FAIL.
 Unknown (next to rule out): whether the title needs a HOLD of E rather than a tap; whether the game drops input while its
 window is not active (tracked via WM_ACTIVATE*/focus messages, not only GetForegroundWindow/GetFocus).
-- 16:33 run, owner focused the window (title-bar click) and pressed nothing: same FAIL, 30 reads. Focus alone is not the cause.
+- 16:33 run, a human focused the window (title-bar click) and pressed nothing: same FAIL, 30 reads. Focus alone is not the cause.
 - 16:37 run, queued WM_INPUT (PostMessage, per-event marker handles), no human: FAIL. Game read 29-30 events; it calls
   GetAsyncKeyState ~100/s but never for E (0x45). RegisterRawInputDevices hook saw no keyboard hwndTarget (registered before
   our hook or with NULL). Guess: the menus (an HTML/CSS-style UI, "selector-*" class strings in the exe) take WM_KEYDOWN/WM_CHAR.
 - 16:42 run, raw events PLUS classic WM_KEYDOWN / WM_CHAR('e') / WM_KEYUP posted to the game window, no human input
-  (owner asked to keep hands off): PASS. GameLoadingStartReq after press 9 (~35 s of presses), "in the world" 4 s later,
+  (no human input): PASS. GameLoadingStartReq after press 9 (~35 s of presses), "in the world" 4 s later,
   test_autoquit closed the game. So the title/menu UI reads the classic key messages, not Raw Input.
   Unattended path into the world: [dev] test_autoload=1 (default key E), test_autoquit=1.
 
@@ -247,7 +247,7 @@ Observed (cdmp_peer --mode relay --delay 50, unattended, saves restored to the r
   sent the same branch again at 91.515, before the tracker (sniffer writer thread, a few ms behind) saw the answer. Harmless
   (identical branch) but the driver counted it as "applied 3". Fixed: a stage whose own branch request is unanswered is "busy"
   and not touched (unit test added). Confirmation run below.
-Observed by the owner (watching the window): the echo copy of the player animates choppily and sometimes teleports.
+Observed by a human watching the window: the echo copy of the player animates choppily and sometimes teleports.
   Log: 4001 events replayed, clock offset 0 ms, nothing dropped on the link; 1584 of 3891 movement positions dropped as
   repeats; test config uses coop delay_ms=1500 and offset 0.01 m. Cause unknown; cdmp's author also noted occasional teleports.
 - 17:12 confirmation run with the busy fix (same setup): sent 2, applied 2 (0xF4CB1 -> 0x164, 0xF4CB5 -> 0x165), the game's
@@ -274,7 +274,7 @@ cdmp_peer --mode relay --delay 60 --loss 5 --jitter 40 (relay dropped 420 of 851
 branches arrived over the reliable channel (71 fragments), applied 2 (0xF4CB1 -> 0x163, 0xF4CB5 -> 0x164) 100 ms after the feed,
 own echoed branches reached alone 2, game alive 30 s later.
 
-## 2026-10-19 — the echo copy's stutter/teleports (separate read-only investigation, cdmp-puppet-findings.md, local)
+## 2026-10-19 — the echo copy's stutter/teleports (separate read-only investigation; its write-up is not in this repo, the findings are below)
 Summary of its findings (code refs checked here: inject_clock.h:27 kAheadMs=450; coop.cpp:121-124 echo offset only when offset_m==0):
 - Our test config caused much of it: delay_ms=1500 vs the 450 ms "ahead" clamp re-stamps every Move (timing margin pinned at
   650 ms, ~40 % dropped as repeats, actions ~1 s behind positions); offset_m=0.01 disables the 2.5 m echo offset, so the copy
@@ -319,7 +319,7 @@ starting or stopping. Walking results above were measured with the old meter, bu
 vs none (thinned), so they stand. Cause of the running residue: unknown.
 
 ## 2026-10-20 12:42-12:48 — a person accepts a quest ("Renee's Request"), recorded (one PC, test copy, cdmp stage_record=1 + sniffer)
-Setup: saves at the record/replay restore point; walk bot, autoload, autoquit off; [net] off; the owner played.
+Setup: saves at the record/replay restore point; walk bot, autoload, autoquit off; [net] off; a human played (manual run).
 First launch failed: Steam was not running ("steamclient_init_registry Failed to connect to Steam"), the game quit before
 the mod's late init. Relaunched with Steam up: fine. (Lesson: check `pgrep steam` before launching.)
 Observed (capture cdmp_packets_20261020-124236, t = s since first packet; tools/re/missiondiff.py diffs the list Acks):
@@ -352,11 +352,11 @@ Observed:
   conversation open and the player where the save starts (not at Renee); within 4 ms it added the same three slots
   0xFFFFF7F8/7/6 with the same kind/state and the same position floats. Game alive 30 s later both times.
 - The request's template key in the rows (+14 in row 1, +6 in rows 2-3) differed every time:
-  person 0x0D2DA7 ("cook a fish dish"), replay 1 0x0D2147, replay 2 0x0D214C ("cook fish porridge", seen by the owner).
+  person 0x0D2DA7 ("cook a fish dish"), replay 1 0x0D2147, replay 2 0x0D214C ("cook fish porridge", seen on screen).
   SetExecuteTimeQuestDialogAck carried 0x0D2DAB / 0x0D214B accordingly.
-- Run 1's check said PASS because it compared slot key + kind + state only: a FALSE PASS (the owner noticed). Fixed: the
+- Run 1's check said PASS because it compared slot key + kind + state only: a FALSE PASS (noticed on screen in the manual check). Fixed: the
   whole row is compared and differing bytes are logged; run 2 = FAIL "row DIFFERS: +14:4C(recorded A7)".
-- Owner's "Foul-Mouthed Reunion accepted" in run 1 = only the tracked quest at load (owner's correction); its key is not
+- "Foul-Mouthed Reunion accepted", reported from the screen in run 1, was only the tracked quest at load (corrected on a second look); its key is not
   in any load-time mission list (tools/re/findkey.py).
 - Steam Cloud: the real userdata/<id>/3321460/remotecache.vdf was rewritten at the end of a test run but lists only old
   entries (2026-03/09); no test save was uploaded. Watch this.
@@ -410,7 +410,7 @@ Derived:
 Code (cdmp, local): mod/net/quest_rng (mid-hook on QuestDialogEndReq's handler exe+0x2A4C510; sets the thread's rand
 state via the getter exe+0x1378F10; with a pin, log-only hooks on the getter and on 0x22CF730/0x22CFDD0 trace 3 s of
 draws), [dev] stage_replay_rng=<decimal> (0 = off). Runner tools/proton/rng_pin_runs.sh (restores saves before and
-after every run). Same replay file as before (the owner's accept of Renee's Request, exact bytes).
+after every run). Same replay file as before (the manual run's accept of Renee's Request, exact bytes).
 Observed:
 - The handler runs on the server thread (812 in these runs); the hook set the state every time (log "pinned").
 - Templates: pin 12345 -> 0x0D219C, 0x0D215D, 0x0D2197 (trace run), 0x0D2153, 0x0D2158; pin 987654321 -> 0x0D2150.
@@ -446,8 +446,8 @@ Observed:
   0x292C450 -> 0x292D600 -> 0x29283A0 -> 0x2928B80 -> 0x1AC8DD0 -> 0x1AC8C13 -> 0x1ABF9A0 -> 0x1A9B4A0 (Wine unwind).
   The template was already in src. The run then CRASHED (game crash reporter): Wine did not fill Dr6, so our handler
   declined the single step. Fixed (treat a single step while armed as ours). Test copy only; saves restored.
-- Force (mode 3) at the copy: slot 0xFFFFF7F8 template rolled -> 0x0D2DA7 (the owner's variant) at src+0x38 before the
-  first copy (+10 ms): the 3009 delta row of 0xFFFFF7F8 then matched the owner's recording byte for byte.
+- Force (mode 3) at the copy: slot 0xFFFFF7F8 template rolled -> 0x0D2DA7 (the manual run's value) at src+0x38 before the
+  first copy (+10 ms): the 3009 delta row of 0xFFFFF7F8 then matched the manual recording byte for byte.
   The objective slots 0xFFFFF7F7/F6 (template at +0x30 in their objects) were first copied 6 s later, so the client got
   them with the rolled template; the server's own state was fixed by then: SetMissionNewAlarmFalseAck 2212 at +60 s
   re-sent 0xFFFFF7F7 with 0x0D2DA7 (unforced run T2: the rolled one).
@@ -462,21 +462,21 @@ Derived:
 Guess: forcing at the roll itself (before any product is made) is the clean fix; finding it needs a write watch on the
 fresh request object (page-aligned src, e.g. 0x...450000) before it exists, e.g. via its allocation.
 
-## 2026-10-20 14:03-14:25 — forced replay played by the owner: what a person sees (test copy)
+## 2026-10-20 14:03-14:25 — forced replay played by hand: what a person sees (test copy)
 Setup: saves at the restore point; replay of the accept (dialog only, no stage branches), mission_watch=3 forcing 0x0D2DA7
-into 0xFFFFF7F8/F7/F6; no auto-quit; the owner played on.
-Observed (owner, in game):
+into 0xFFFFF7F8/F7/F6; no auto-quit; a human played on (manual run).
+Observed (manual run, in game):
 - The quest log showed FISH PORRIDGE (the roll was 0x0D2158), not the forced fish dish.
 - Renee was "unknown" to the character; the hand-in option was greyed out.
 Observed (log + capture):
 - Forcing as before: main slot forced at the first copy, objective slots 6 s later; the client had already received the
   objective rows and SetExecuteTimeQuestDialogAck (rolled+4) with the rolled variant; SetMissionNewAlarmFalseAck at +34 s
   re-sent 0xFFFFF7F7 with 0x0D2DA7.
-- MY BUG: at 14:19:43 and 14:20:47, as the quest advanced, the server reused those objects (src 0x...35A000 now holding key
+- BUG (in the force rule): at 14:19:43 and 14:20:47, as the quest advanced, the server reused those objects (src 0x...35A000 now holding key
   0xFFFFF7F7) and the force rule ("any dword 0x0D0000-0x0DFFFF") overwrote 0x0D25D8 and 0x0D2BD4 (other fields, probably step
   keys) with 0x0D2DA7. Everything in this session after ~14:19 is unreliable. Test copy only; saves restored after.
-- Knowledge: in the owner's original session the server sent NormalLearnKnowledgeListAck 2439 with 0x0F4A35 at t=204.3,
-  when stage 0xF475E (the meeting scene) ran its branches 6,0,3,1; in this session 0x0F4A35 came only at t=1019 (the owner
+- Knowledge: in the original manual session the server sent NormalLearnKnowledgeListAck 2439 with 0x0F4A35 at t=204.3,
+  when stage 0xF475E (the meeting scene) ran its branches 6,0,3,1; in this session 0x0F4A35 came only at t=1019 (the player
   talking to her). Derived: 0x0F4A35 = knowing Renee; it comes from the meeting scene, which the dialog-only replay skipped.
 Derived:
 - A guest needs the host's meeting scene (stage branches) as well as the accept, or NPCs stay unknown.
@@ -486,7 +486,7 @@ Derived:
   the rolled value, only right after the accept) if it is ever used again.
 
 ## 2026-10-20 14:25-15:05 — looking for the variant pool; NPC ids are per load (unattended, 4 runs)
-Goal (owner): each player completes their own request, but both get the SAME variant.
+Goal (project decision): each player completes their own request, but both get the SAME variant.
 Observed:
 - Pool scan (mission_watch=4: every readable dword equal to one of the 12 variants seen so far): outside the mod only 28
   hits in ~5.8 GB, no cluster of 3+ variants within 1 MB. Most sit one per record in one large private allocation (the loaded
@@ -494,7 +494,7 @@ Observed:
   (A first run "found" a 12-variant cluster: the mod's own constant table. Excluded since.)
 - Two replays (P2, P3) produced NO mission: the server never acknowledged SetQuestDialogObstacleReq for actor 0xB01001C1.
   ActorLoadDataAck 2005 (u32 runtime id at +3, u32 static character key at +22, UTF-16 name at +36) shows why: 0xB01001C1
-  was "Renee" in the owner's session, "Rhett" in P1 (the accept still worked!), "Owl" in P2 (failed). Renee's static key
+  was "Renee" in the manual session, "Rhett" in P1 (the accept still worked!), "Owl" in P2 (failed). Renee's static key
   0x01C29010 is the same in all six sessions checked; her runtime id ranged 0xB01001BA-0xB01001C1.
   Fix: stage_tracker maps static key <-> runtime id from 2005; recordings carry "N runtime static"; the replay substitutes
   the NPC's runtime id of this session (waits up to 60 s for it to load). P4 with the fix: accepted (variant 0x0D21C3, new).
@@ -510,8 +510,20 @@ Distinct variants seen so far (13, in 16 accepts; 0x0D2158 twice): 0x0D2147, 0x0
 0x0D215D, 0x0D2197, 0x0D219C, 0x0D219D, 0x0D21A5, 0x0D21C3, 0x0D21C5, 0x0D2DA7.
 
 ## 2026-10-20 15:15 — CORRECTION: the "request variant" is the accept TIME; there is no variant (data + 14 captures)
-Source 1 (separate read-only session, paz-re/FINDINGS.md, local; archives decoded: .pamt index, LZ4 blocks; the game
-tables in gamedata/binarystaticinfo__ are not encrypted): Renee = NPC "Raine" (character 0x1C2, NOW_Unique_Raine_450).
+Source 1: a read-only decode of the test copy's data archives, done in a separate session. The decoder scripts and
+everything they extracted are NOT in this repo (game data), so this source cannot be checked from the repo; the facts
+it gave are inlined here, and the format is described so it can be redone:
+- `NNNN/0.pamt` index: u32 crc | u32 paz_count | u32 ?; paz_count x {u32 idx, u32 crc, u32 size}; two name blocks (dirs,
+  files), each u32 length + trie records {u32 parent offset or 0xFFFFFFFF, u8 len, chars}; u32 n + folders {u32 hash,
+  u32 name offset, u32 first file, u32 count}; u32 n + files {u32 name offset, u32 offset, u32 csize, u32 size, u16 paz,
+  u16 flags}. All 34 indexes parse to their exact end (2,052,523 entries).
+- flags low nibble = compression (0 none, 2 raw LZ4 block); 0x30 = encrypted (XML-like files and string tables; ChaCha20
+  in the exe, key not recovered). The game tables (`gamedata/binarystaticinfo__/bin/*.staticinfoheader|body`) are
+  neither encrypted nor compressed beyond LZ4: header = count, then {u32 key, u32 body offset}; record = u32 key,
+  u32 name length, name, fields. Static keys start at 1,000,000 in every table, so a key means nothing without its table.
+- 0x0D2147-0x0D2DAB were searched as keys in the 87 tables that have a key index and as raw u32 in all 134 table
+  bodies: not present (one unrelated byte match).
+Facts: Renee = NPC "Raine" (character 0x1C2, NOW_Unique_Raine_450).
 Mission_HernandCastle_Raine (0x0F42D5) is ONE fixed task: sub-missions 0xFFFFF7F8 (accept; gives Recipe_Fish_Porridge,
 fish meat x15, wheat x5, salt x5, water x15), 0xFFFFF7F7 (know the recipe), 0xFFFFF7F6 (make Fish_Porridge), 0x0F4B06
 (hand in Fish_Porridge x3). No pool, weights or roll in the data. 0x0D2147..0x0D2DAB are not keys in any table.
@@ -520,32 +532,32 @@ QuestDialog_HernandCastle_Raine_Start; 0x0F475E = stage HerStore_Meat (the butch
 Raine (character knowledge).
 Source 2 (this session, 14 captures; SetExecuteTimeQuestDialogAck value = row value + 4):
 - Plain replays, accept 42.6-43.9 s after GameLoadingStartReq: 860491-860514.
-- Replays where my mod held the server thread at the accept (memory scans 4.1-4.3 s; trace hooks): 860570-860616, i.e.
+- Replays where the mod's diagnostics held the server thread at the accept (memory scans 4.1-4.3 s; trace hooks): 860570-860616, i.e.
   ~+80 = ~4.2 s x 19.
-- The owner's session, 163 s later in the world: 863659 (+~3150 = ~165 s x 19).
+- The manual session, 163 s later in the world: 863659 (+~3150 = ~165 s x 19).
 Derived: the value is the game-clock time of the accept (~19 units per real second), not a random variant. Every
 "variant" conclusion above is WITHDRAWN: the RNG pin (13:15-13:50) could not matter; "forcing the host's template"
-(13:55-14:25) wrote the owner's OLDER accept time into the guest's mission (the client's "Fish Porridge" was always right;
+(13:55-14:25) wrote the manual session's OLDER accept time into the guest's mission (the client's "Fish Porridge" was always right;
 the forced time may have been harmful); the pool scans (14:25-15:05) looked for a pool that does not exist.
 Still valid: QuestDialogEndReq replay works without the dialog open; NPCs must be translated by static key; the meeting
 scene is what makes Raine known (0x0F4A35); the mission copy exe+0x1A9B4A0 and the object layout (+0x38 = accept time).
 Co-op consequence: the guest gets the same request by replaying the host's meeting scene + accept; the accept-time field
 differs per machine and should not be compared or copied. Unit/rate of the clock: unknown (~19/s; game time?).
-Lesson: a value I called a "template key" was never checked against the data tables before I built on it.
+Lesson: a value read as a "template key" was never checked against the data tables before work was built on it.
 
 ## 2026-10-20 15:00-15:30 — the guest meets Raine: meeting scene + accept replayed, unattended (3 runs)
-Replay file: the owner's stage 0xF475E branches (6, 0, 3, 1) + the accept dialog (NPC translated by static key) + mission
+Replay file: the manual session's stage 0xF475E branches (6, 0, 3, 1) + the accept dialog (NPC translated by static key) + mission
 rows; built from the 12:42 capture (tools/re/rec_from_capture.py now also writes branch lines).
 Observed:
 - S1: stage 0xF475E exists on every load (PrepareSequencerAck ~t=63, with Raine's actor load), not only near her.
   Branch 6 replayed -> in 9 ms StageOnBranchEventAck + NormalLearnKnowledgeListAck 0x0F4A35 (knowing Raine) +
-  StageBranchStateAck(1, 6). Branch 6 opened the shop screen on the guest (the owner saw it "sitting on the trader
+  StageBranchStateAck(1, 6). Branch 6 opened the shop screen on the guest (seen on screen: "sitting on the trader
   screen"); branches 0/3/1 were never sent and expired.
 - Cause 1: the guest queue only sent to an idle stage (state 0, no branch). A scene sends its later branches while the
   stage is busy. Fix (common/stage_sync.h): after the host's branch N is done here, the host's next branch for that key
   goes to the instance sitting on N (not busy). Unit test + mutation check (disabling it fails tests.cpp:1129). One old
   test changed on purpose: it asserted the hold.
-- Cause 2 (bug, also affects live stage sync): StageBranchStateAck comes as 21, 29 or 37-byte payloads (the owner's
+- Cause 2 (bug, also affects live stage sync): StageBranchStateAck comes as 21, 29 or 37-byte payloads (the manual
   session: 2 / 27 / 39); stage_tracker required >= 25 and so missed the 21- and 29-byte ones. Fixed (>= 21).
 - S3 with both fixes: the mod sent 6, 0, 3, 1 to the guest's instance 0x19F; acks state 1/6, 2/0, 7/3, 0/1 within 0.9 s;
   knowledge 0x0F4A35 at branch 6; the accept's three mission rows equal the recording (accept time not compared);
@@ -555,31 +567,31 @@ Observed:
 Not checked yet: whether the guest can hand in (needs a person to cook Fish_Porridge x3 and talk to Raine), and what the
 shop screen does on a guest who is not standing at the shop (S3 was unattended; nobody looked).
 
-## 2026-10-20 15:15-15:19 — a guest-style accept, then the owner cooks and hands in: COMPLETED (test copy)
-Setup: saves at the restore point; replay of the owner's meeting scene (stage 0xF475E: 6, 0, 3, 1) + accept, NPC by
-static key; no auto-quit; the owner played on (never talked to Raine before the hand-in).
+## 2026-10-20 15:15-15:19 — a guest-style accept, then a human cooks and hands in: COMPLETED (test copy)
+Setup: saves at the restore point; replay of the manual session's meeting scene (stage 0xF475E: 6, 0, 3, 1) + accept, NPC by
+static key; no auto-quit; a human played on (manual run; never talked to Raine before the hand-in).
 Observed (log + capture, t = s since the capture started):
 - Replay: branches applied 4, the three mission rows equal to the recording (accept time aside), RESULT PASS.
 - t=149.3 NormalLearnKnowledgeListAck 0x0F4D5E (Knowledge_Recipe_Fish_Porridge, from the recipe the accept gave).
 - t=180.1 mission 0xFFFFF7F6 (make Fish_Porridge) kind 2 -> 5; hand-in mission 0x0F4B06 activated.
-- t=201.9 the owner opens the conversation with Raine (her runtime id 0xB01001C2 in this load); t=221.4 QuestDialogEndReq
+- t=201.9 the player opens the conversation with Raine (her runtime id 0xB01001C2 in this load); t=221.4 QuestDialogEndReq
   (Raine, quest 0x0F4440, answer 11). Within 18 ms: NormalLearnKnowledgeListAck 0x0F4690 (Knowledge_Her_Raine = the
   hand-in reward in the data), 0x0F4B06 kind 2 -> 5, parent 0x0F42D5 appears, SetExecuteTimeQuestDialogAck with
   0x31A2E3AF (QuestDialog_HernandCastle_Raine_Complete); at 227.4 the next missions (0xF4482, 0xFFFFF80A) appear.
 - The game closed normally (menu, "Terminate").
 Derived: a guest who never met the NPC and got the request only by replay can cook and hand it in; the server completes
 it. Accept by replay + hand-in by the player = "each player completes their own, same request".
-Owner's own account (15:25): the quest completed and the reward looked right.
+Tester's report (manual run, 15:25): the quest completed and the reward looked right.
 
 ## 2026-10-20 15:40 — CORRECTION: branch 6 does not open the shop; plan for live accept sharing
 - Withdrawn: "branch 6 opened the shop screen on the guest" (15:00 section, S1). StoreDataListAck (shop contents) in the
   captures: at load (t~14, ~28) in every run; in S1 also at t=236, ~170 s after branch 6, while the scene was stuck
-  after its first branch; never in S2, S3 or the owner's hand-in session, where all four branches ran. The owner's own
+  after its first branch; never in S2, S3 or the manual hand-in session, where all four branches ran. The original manual
   meeting (12:42) had none around branch 6 either (shop data at t=270, after the accept). Cause of the S1 shop screen:
   unknown (the stalled scene is the likely link).
 - Hand-in vs accept on the host: the hand-in (15:15 session) came with RemoveItemToInventoryAck 2481 x2 and
   UseItemReq 2855 right after the answer; the accept (12:42) had no item removal, only additions. One sample each.
-- Share policy (owner, 2026-10-20): request quests are accepted together (the guest gets the host's accept, including the
+- Share policy (project decision, 2026-10-20): request quests are accepted together (the guest gets the host's accept, including the
   meeting scene through stage sync, so the NPC is known); each player cooks and hands in their own; hand-ins and rewards
   are not shared. Note the effect-capture page's warning applies on purpose here: the guest's server runs its own accept,
   so the guest also gets the recipe and ingredients, which the policy wants.
