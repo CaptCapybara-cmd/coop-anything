@@ -662,3 +662,43 @@ re-test above passes.
   branches), all 4 applied on our instance 0x1A2, 0 pending; the accept arrived as a story entry, was sent (5 messages)
   and verified (accepted 1); game alive 30 s after; the relay rejected no datagram. RESULT PASS x4. The two-PC kit built
   from this build is cleared for a human test.
+
+## 2026-10-22 (later) — flight recorder, guest restart, host save/load, and a reliable-channel bug
+Flight recorder: the hub's cofr recorder (tools/flight/cpp, MIT) vendored into cdmp third_party/cofr; cdmp
+src/mod/net/flight.{h,cpp} ([sniffer] flight=1, on in the two-PC kit). Records every cdmp datagram (decoded at dump time:
+message type, and for a story entry its log id and number), the host's story entries (captured) and the guest's (applied),
+markers (loading screens, every change of the stage-sync and accept counters), and every 5 s two digests over what the host
+shared (common/story_digest.h, shared with the fuzz target): 0 = the host's last shared branch per stage key (delivery; the
+live stage state is only in the text, because stage sync also shares ambient stages that cycle by themselves on each PC and
+would look like divergences, seen in the first in-game recording), 1 = this PC's kind of every mission row the host's accepts
+changed (the real check). Files: <bin64>\flight\<host|guest>-<name>-latest.cofr every 30 s (the game can end without running
+shutdown code: in a test it ignored WM_CLOSE and was ended hard, and the first recording was lost), plus one per Ctrl+F12 and
+per failed or given-up shared accept.
+Checked: (a) in game, one PC, relay: the file reads with the hub analyzer (flight.py print), datagrams decoded with story
+numbers, captured/applied pairs, markers; (b) two machines from the fuzz target (CDMP_FLIGHT_DIR): for the clear_on_loading
+twin, `flight.py diverge host.cofr guest1.cofr` names the first divergence at story entry 5 (the accept), the three mission
+rows "not (yet) here", and the chain from the host's capture to the guest's apply.
+Fuzz model extended: Spawn = the guest restarts (mod state fresh, runtime ids new, world kept, reconnect with the log resent);
+Save/Load = the host makes a save point and goes back to it (its world rewinds, ids change; the guest keeps its progress).
+Found and fixed:
+6. A guest that restarted mid-scene got the whole log again with a fresh queue; its stage was past the first branch, so the
+   queue could neither send it nor skip it, and the rest of the scene expired. Fix (stage_sync.h): resume where the guest's
+   stage is: if a later queued branch of that key is the one an instance sits on, the ones before count as reached.
+7. The host loaded an older save mid-scene and played it again from the top; the queue chained the new first branch onto
+   the guest's stage that was already at branch 3, the server refused, and it retried forever. Fix: the resume rule is
+   checked before chaining.
+8. cdmp's ReliableChannel (common/reliable.cpp), any message kind: after a reset the receiver adopts the first unknown stream
+   it sees. Two reconnects 20 ms apart: it adopted the sender's NEW stream, acknowledged three of its fragments, then switched
+   to a late packet of the sender's previous, dead stream, threw the acknowledged fragments away, and treated the new
+   stream's later packets as an old stream (acknowledged, dropped). The sender saw everything acknowledged; the guest got
+   nothing. Fix: with a clock, a stream the receiver has not seen replaces the current one only after the current one has been
+   quiet for 1 s; a refused fragment is not acknowledged, so a live sender resends it. Unit test from the fuzzer's exact
+   sequence; mutation (drop the check) fails tests.cpp:547.
+Results: 1000 sessions ALL OK (now with guest restarts and host loads: 70 restarts, 21 saves, 8 loads in the earlier sweep);
+hell and mobile presets, 4 players, 300 each, ALL OK; twins: share_handins, no_npc_translate, no_chain, clear_on_loading caught
+in the first 300; no_story_dedup now caught only at session 2356 (the resume rule makes most duplicates harmless; a single
+stale first branch after a finished scene still re-runs it without the dedup). In game, one PC, relay, newest build: PASS x4,
+0 of 2161 datagrams rejected, recorder file written with markers.
+Limits: ReliableChannel takes its stream ids from std::random_device, so a fuzz seed does not always replay byte for byte;
+guests restarting from an OLDER save of their own, and host rewinds past a guest's accepted quest, are only partly modelled
+(the guest keeps what it has; the view compares only what the host still has).

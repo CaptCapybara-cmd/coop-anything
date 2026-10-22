@@ -15,11 +15,11 @@ restore || { echo "restore failed, stopped"; exit 1; }
 cp "$W/testinst/save-backups/cdmp.ini.before-human-record" "$G/cdmp.ini"
 sed -i -e 's/^stage_sync=.*/stage_sync=1\nquest_share=1/' -e 's/^test_walk_s=.*/test_walk_s=0/' \
   -e 's/^test_autoload=.*/test_autoload=1/' -e 's/^test_autoquit=.*/test_autoquit=1/' -e 's/^stage_record=.*/stage_record=0/' \
-  -e 's/^stage_replay=.*/stage_replay=0/' -e 's/^stage_sync_feed=.*/stage_sync_feed=1\nquest_share_feed=1/' "$G/cdmp.ini"
+  -e 's/^stage_replay=.*/stage_replay=0/' -e 's/^record=1/record=1\nflight=1/' -e 's/^stage_sync_feed=.*/stage_sync_feed=1\nquest_share_feed=1/' "$G/cdmp.ini"
 cp "$W/testinst/save-backups/renee-record/$feed" "$G/cdmp_stage_record.txt"
 "$W/harness/echo_test.sh" "$W"
 sleep 5
-cp "$G/cdmp.log" "$W/harness/peer.log" "$out/"; mv "$G"/cdmp_packets_* "$out/" 2>/dev/null
+cp "$G/cdmp.log" "$W/harness/peer.log" "$out/"; mv "$G"/cdmp_packets_* "$out/" 2>/dev/null; mv "$G"/flight "$out/" 2>/dev/null
 restore && saves=restored || saves=RESTORE-FAILED
 rm -f "$G/cdmp_stage_record.txt"; cp "$W/testinst/save-backups/cdmp.ini.before-human-record" "$G/cdmp.ini"
 echo "$name: saves $saves"
