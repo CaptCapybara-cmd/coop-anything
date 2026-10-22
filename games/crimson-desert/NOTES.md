@@ -614,3 +614,46 @@ Observed (cdmp_peer relay, one PC, saves restored, harness/echo_quest_test.sh): 
 6, 0, 3, 1 on our instance 0x19F; the accept arrived, was sent to our server (5 messages) and verified (accepted 1);
 host-side detector counted 0 accepts (our injected answer is not taken for our own: no echo loop); game alive 30 s after.
 Not yet: two PCs; a guest far from the NPC (the wait); hand-in by a guest after a live accept.
+
+## 2026-10-22 — quest sharing under the hub fuzzer (tools/fuzz), game-free: 5 real bugs found and fixed
+Setup: cdmp `tests/fuzz/quest_target.cpp`, a coopfuzz target (build: `cmake -S tests/fuzz -B build-fuzz
+-DCOOPFUZZ_DIR=<coop-anything>/tools/fuzz`, g++ and cmake 3.31.6 on Linux). It runs cdmp's real StageSyncQueue,
+AcceptDetector, GuestAcceptQueue, wire format and ReliableChannel for a host and 1-3 guests over the fuzzer's lossy link,
+with a fake world shaped like the observed one: 4 requests, NPCs by static key with per-load runtime ids that only load in
+their area, a meeting scene with branches 6, 0, 3, 1 (6 = NPC known; a finished scene restarts on 6; a branch outside the
+chart counts as a crash), accept = main row 2 -> 5 plus two added rows, hand-in = main 5 -> 6 plus the next mission's row
+added plus an item removed. Ops: meet+accept, cook+hand-in, area change, loading screen, unrelated mission change, guest
+leave/join, an old story entry again, link changes. View: for each request the host accepted / each scene the host finished,
+whether every machine has it; a guest's own accepts and hand-ins are not compared. Native checks: a made-up branch reached a
+server; the mod sent a hand-in.
+Found (each from a shrunk 2-11 op scenario; each fixed in cdmp and covered by a unit test):
+1. A refused hand-in (nothing removed) followed by an unrelated row change inside the 400 ms window was shared as an accept,
+   and the guest's mod sent a HAND-IN. Fix: an accept must ADD rows; the guest checks added rows absent and changed rows at
+   the host's before OR after kind; done = added rows present at the after kind.
+2. A second dialog answer inside the window replaced the first: the accept was never shared. Fix: answers wait in a list;
+   changes and removals belong to the latest answer before them.
+3. A guest who dropped out mid-scene never got the request: a reconnection resets the reliable channels (client_session.cpp),
+   in-flight branches and accepts were lost, and nothing was resent. Fix: common/story_log.h, the host's numbered story log
+   (RelKind::Story, protocol 12), resent in full on every new link; the guest applies each number once (resending without
+   numbers re-runs scenes).
+4. The guest walked past the NPC: the conversation started, the NPC unloaded before the answer, the server refused, and the
+   accept was dropped for good. Fix: before each message the NPC must still be loaded with the same id, else the
+   conversation is closed and the accept waits again; a refused attempt is retried (3 in all).
+5. One flipped bit on the link: a branch became 0x40000 (a made-up branch = a crash in the real game), and a story sequence
+   number became 0x01000001, which then hid every later entry. cdmp datagrams had no checksum. Fix: CRC-32 at the end of every
+   datagram (protocol 12); a test flips every bit of a datagram and all are refused.
+Also changed (mirrored in the target): a loading screen no longer clears the guest's queues (their entries name stages and
+NPCs by static key; clearing lost the host's branches and accepts).
+Result after the fixes: 1000 sessions (2-4 players, varied links) ALL OK; 300 sessions with 4 players on the "hell" and
+"mobile" link presets ALL OK. Mutation twins, each must fail: share_handins (detector ignores removals; needed the hand-in to
+add a row like the real one, else the added-rows rule hid it), no_npc_translate, no_chain, no_story_dedup, clear_on_loading:
+all 5 caught.
+Limits: the world is a model (one sample each of a real accept and hand-in); guest restarts with their own save, host
+save/load and main-story quests are not modelled. Not yet re-run in the game: the relay test with protocol 12 (Steam was not
+running; starting it signs in to the account, so it waits for a human).
+Branch-table guard: decided against for now. The remaining ways a made-up branch reaches a game are mismatched data (cdmp
+refuses other builds and mod versions) and corruption (now the CRC). The guard would call the game's stage lookup under its
+lock from the mod's thread (deadlock/crash risk, untestable without a crash). Revisit if a two-PC run shows a mismatch.
+Two-PC kit: cdmp `scripts/package_coop.sh` (Linux twin of package_coop.ps1) -> dist/cdmp-coop-<date>.zip with both configs set
+to stage_sync=1 + quest_share=1 and an English test plan (kit/coop/TEST-QUESTS.md). Not to be handed out before the relay
+re-test above passes.
