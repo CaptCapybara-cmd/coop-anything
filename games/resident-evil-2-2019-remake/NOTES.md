@@ -96,6 +96,41 @@ Layered on the proven local architecture:
 - Unknown: re2coop license — source is on Nexus as a packaged lua; distribution/derivative
   terms of the mod need checking before we build on its code.
 
+## Workspace build environment (phase 2, done 2026-10-23)
+
+Verified with `python tools/test_all.py`: **all 15 sync tools now print all green**.
+On the first pass the following three failures appeared on this machine; all are
+tool-vs-newer-environment issues, which we are going to submit via PR:
+
+- **flight** hard-coded `["-G", "Visual Studio 17 2022", "-A", "x64"]` (`run_tests.py`).
+  When VS 2022 is absent, it falls back to no generator → CMake chooses NMake →
+  `nmake --parallel 1` → U1065. On this machine there is only BuildTools 18 (VS 2026).
+  Fix: probe `Visual Studio 18 2026` → `Visual Studio 17 2022` → `Ninja`, and detect
+  the generator via the `CMAKE_GENERATOR` line in the build cache (the compiler path
+  in the cache also contains "Visual Studio" and confuses the old check).
+- **flight (CommandOracle)** parsed via `shlex.split(posix=False)` on Windows, which
+  does not remove MSVC quoting if the path contains a space → `python -I "<path>"`.
+  Fix: our own `_msvcrt_split` parser (MS CRT rules) when `os.name == 'nt'`.
+- **mutants (coop_mut.h)**: the test asserted that the literal like `add_wrong_operator`
+  is in the test binary in contiguous bytes. MSVC 2026 folds the literales of
+  `is("name")` comparisons into the instruction as 64-bit immediates
+  (`add_wron`+`g_operat`+`or` interleaved), leaving nothing to find. Fix: `COOP_MUT_NOINLINE`
+  (`__declspec(noinline)` / `__attribute__((noinline))`) in `coop_mut::is()` so the constant
+  survives contiguous in .rdata (and additionally smaller binaries).
+
+Environment steps (PowerShell) that are required for running it, recorded in `local/owner-state.md`:
+
+1. `winget install GitHub.cli Kitware.CMake Ninja-build.Ninja` (already installed here).
+2. Prefix PATH with `C:\Program Files\CMake\bin` + winget `Links` of Ninja (session-specific PATH).
+3. Wrap the whole session with
+   `cmd /c "chcp 65001 > NUL && <VsDevCmd> -arch=x64 && python tools\test_all.py"`.
+   Important: it must be the banner codepage **before** Python starts (UTF-8).
+   The repo calls the tools with `-I`; `-I` discards the `PYTHONIOENCODING` environment variable
+   and then `print()` under cp1252 crashes on Unicode characters in test notes. Therefore we
+   launched here without `-I` (only for the encoding issue, not for isolation reasons).
+4. A deleted build directory (`${env:TEMP}\cofr-flight-build`, `$env:TEMP\coop-mutants-build-*`)
+   forces the new generator.
+
 ## Unknowns to next steps
 
 - Two-copy loopback pawn sync test (needs a test copy of the game on another drive).
