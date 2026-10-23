@@ -98,3 +98,10 @@ Root causes found in bytecode:
   minimap died -> LevelTransition ctor (ZDoor, Giant's broken door) crashed on null getTile.
 - Fix: share only the minimap; always null hud2.minimap before destroying hud2; restore HUD.ME if dispose cleared it.
 - Process lesson: build.sh hid a failed build and an old dll was staged once; build.sh now fails on build errors.
+
+## Playtest 5 (v0.3.1) -> v0.3.2
+- Crash leaving the PrisonStart sub-area: P2's HUD shared P1's MiniMap; on area change Game.activateSubLevel ->
+  HUD.initHero rebuilds the map, P2 HUD's onResize also ran minimap.onResize (and rebound its get_pixelScale) ->
+  MiniMap.initUI reflow null .x -> P1 HUD crash. Lesson: never share HUD sub-objects between two HUD instances.
+- v0.3.2: P2 HUD shares nothing; no global HUD.ME swap (only inside Hero.updateLifeBar); any exception inside
+  P2's HUD code is caught and logged once instead of crashing (P2 HUD is cosmetic).
