@@ -41,3 +41,20 @@ Goal (owner): local couch co-op, one PC, two gamepads, two real heroes; per-play
   the screen edge to move forward, which makes them run blind into enemies/traps and is risky on high-altitude
   biomes with moving platforms and pits (e.g. cloud/tower maps). Revisit once the base mod works in-game.
 - Current state: v0.1.1 = midpoint camera + hard horizontal screen-bound + vertical pull-back after 1.5 s.
+
+## Playtest 1 (owner, 2026-10-23, v0.1.1) — QA level: player reports
+Worked: P2 spawned on pad 2 (P1 pad#2, P2 pad#3), movement, midpoint camera (owner happy with feel).
+Bugs -> fixed in v0.2.0 (untested):
+- P1 frozen after P2's ReplaceItem menu: menus open an EXCLUSIVE ControllerAccess on the boot controller
+  (ControllerAccess ctor f@2477 sets parent.exclusiveId); v0.1 overwrote ui.controller without dispose ->
+  boot controller stayed exclusive forever. Fix: dispose original access, give menu exclusive P2 access.
+- Players pushed each other: hook Entity.canHaveRepellingWith -> false for the hero pair.
+- Loot copies of swapped/dropped gear (log showed ThunderShield #720 "Equipped" copied): items ever in an
+  inventory are "owned" and drops created during pick/P2 menus are never copied. DeathMoney no longer copied
+  (consumables whitelisted: *Tier scrolls, QuarterUp, Food/Meat).
+- Starting pipes (en.inter.Random*Spawner, meta unlocks RandomBow/RandomShield/RandomCC/Recycling): owner wants
+  each player to pick their own build. Now each pipe rolls a separate item for P2 (spawnItem called again),
+  reserved per player, side by side.
+- P2 HUD: second ui.HUD instance built/updated under a P2 scope (game.hero, game.hud, HUD.ME -> P2's),
+  leftFlow mirrored to bottom-right; P1 minimap hidden, money/cells/kills moved to top-right.
+Cosmetic, owner OK to leave: P2 has no head.
