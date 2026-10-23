@@ -58,3 +58,6 @@ Bugs -> fixed in v0.2.0 (untested):
 - P2 HUD: second ui.HUD instance built/updated under a P2 scope (game.hero, game.hud, HUD.ME -> P2's),
   leftFlow mirrored to bottom-right; P1 minimap hidden, money/cells/kills moved to top-right.
 Cosmetic, owner OK to leave: P2 has no head.
+- Deploy lesson: re-committing the same staged path to the PC silently wrote the PREVIOUS build (owner ran
+  v0.1.1 again). Always stage each build under a new versioned folder and verify by reading it back (SHA-256)
+  and checking the "[LocalCoop] vX loaded" log line. v0.2.0 dll sha256 b155a45c...de6c6 verified on PC.
