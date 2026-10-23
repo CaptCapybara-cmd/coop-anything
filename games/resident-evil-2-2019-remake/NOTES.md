@@ -225,9 +225,33 @@ by a fake REFramework param, host binds 27960 / client env `GAMEPOOL_ROLE=client
   incrementing); client apply-log shows `playerpos` ref 256 (kPawnBase) + `spawn` applies;
   idem keys shaped `0x2…` (snapshot)/`0x4…` (pawn) as in the fuzz report format.
 
-Next: first smoke INSIDE the game (launch `D:\coop-test\re2\re2.exe` with the plugin; check
-`re2_framework_log.txt` COOPNET lines + status file ticking), then a gamepool 2-instance
-pair, then chaos relay, then real pawn data via the RE SDK.
+**Pump-rate bug found and fixed via the flight recorder** (this is the automation doing its
+job): the first pair runs synced but at absurd pacing (host `progVer` ~700 versions/s, own
+grant→release pairs 3 ms apart). Instrumenting the pump (`dbg pumps/tickIt/...` lines) showed
+`tickIt=1,569,958` on the first pump: the pump clock is `steady_clock` ms since boot (~78M)
+but every period timer was initialized at 1 — the 50/200 ms tick timers had catch-up `while`
+loops (1.5M-iteration first-pump flood), while the driver timers (`if` + `+= step`) lagged
+forever by ~78M ms and fired every pump. Fix: timers are reset to `t0_` in `prepare()` and a
+single `every(next, period, maxCatchUp, fn)` helper ticks with a bounded catch-up and jumps
+forward after a stall (window minimized/no frames), so no history replay flood. Verified:
+518 pumps → pawn 22 (≈1/700ms), spawn 5 (≈1/3.5s), door 2 (≈1/9s), hit 4 (≈1/4s).
+
+**Two real game copies sync (milestone A)** (2026-10-23, `D:\coop-test\re2`, both copies
+launched from the same dir, host first, client ~25 s later, ~40 s observation):
+
+- host: `progVer=640 own=11 tx=169 rx=169 txErr=0`, dbg `pumps=12839 pawn=65 spawn=13
+  door=6 hit=12` (game presents ~115 Hz ≈ on_present per-frame pump);
+- client: `myVer=636` — within 4 in-flight versions of the host's current world version,
+  `tx=166 rx=166 txErr=0`, `applied=280`, rejects = expected dedupes;
+- the client joins late and converges (no explicit join handshake needed for the
+  presence-always-up milestone; versions dedupe by idem).
+- Deploy notes: the game copies must be dead before replacing the plugin DLL (Windows file
+  lock); `re2coop_main.lua` renamed `.disabled` (backup `.bak` next to it) so re2coop's own
+  Lua doesn't interfere.
+
+Next: gamepool 2-instance pair (`local/re2.json`, `D:\coop-test\re2pool`, per-instance
+`re2coopnet.ini` via `pairs.edits`), then `tools/chaos` bad_wifi relay over that pair, then
+real pawn data through the RE SDK (the synthetic world stays as the health check).
 
 ## Unknowns to next steps
 
