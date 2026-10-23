@@ -74,3 +74,19 @@ Cosmetic, owner OK to leave: P2 has no head.
   of the same one; switches turn off only after both chose. Items still inArmory can't be taken.
 - P1 counters: HUD.rightFlow spans the whole screen and bottom-aligns; set verticalAlign=Top to move them up.
 - Map = action 9 = pad SELECT (Share/Create/View), keyboard Tab (Options.configController f@5790).
+
+## Playtest 3 (v0.2.2) -> v0.3.0 (verified on PC, sha256 dd9915df...)
+Root causes found in bytecode:
+- Life bar: Hero.updateLifeBar (f@2025) writes to ui.HUD.ME.heroLifeBar -> P2's life went to P1's bar (P1 bar showed
+  P2 damage, glitched white, low-life sound looped; P2's bar never updated -> stuck orange "recover" part).
+  Fix: HUD.ME = owner's HUD during updateLifeBar and during P2 scopes; P2's HUD shares P1's minimap + counters.
+- Crash "Null access .alpha" in Hero.postUpdate (spr null): P2 updated after being cleaned when P1's death tore the
+  level down. Guard: skip P2 pre/fixed/postUpdate when spr/_level null.
+- P1 death ended the run with P2 alive: death reached Hero.onDie without Hero.kill. Down/revive now also on onDie.
+- Teleport statue: Teleport.onActivate -> HUD.ME.minimap.chooseTarget(..., startTeleport(by)); minimap reads its own
+  `controller` -> P1 chose. Swap to P2 access when P2 activated. Partner now follows any >8-cell jump (teleports).
+- Scrolls: ids BrutalityUp/SurvivalUp/TacticUp/QuarterUp (+ choice scroll -> TierSelect) go through
+  Hero.applyItemPickEffect, not pickItem. Partner gets the same scroll after the picker's TierSelect closes.
+- Venus flytrap = en.ltrap.CarnivorousPlant; fixedUpdate only checks pr.Game.ME.hero. Run with game.hero = nearest.
+- Dupe exploit: P1 dropped SeismicStomp via P1's ReplaceItem (outside pick depth, new InventItem instance) and P2's
+  pick copied it. Now: owned by permanentId, drops during any replace menu / dropAndUpdateItem never copied.
