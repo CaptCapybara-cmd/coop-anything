@@ -142,27 +142,48 @@ the game, verified with the framework's own oracles):
   (pawns + zombies + doors + item holders), applied only if `version > myVersion`
   (per-thing `idem`), retransmitted until the client's ack, which allows it to stop.
 - Interactions as requests to the host with SNAPSHOT replication: doors (interact), items
-  (pick up → machine buys it), spawning a zombie (one-time per site, double request = clean
-  rejection), damage to a zombie (host). `join/leave/save/load/stale` outside of this MVP
-  (documented): they are left for the lib prototype with ownership/worldEpoch
-  (the complete example target in example_target.cpp already covers exactly that, it is the model
-  to expand to).
+  (pick up → machine buys it; drop releases it), spawning a zombie (one-time per site, double
+  request = clean rejection), damage to a zombie (host; last hit releases the corpse via
+  logOwn `Release`). Requests are a serial stream per client (`seq`, deduped by `(client, seq)`,
+  only acked/accepted once), each carrying the world epoch it was issued in.
+- Extended beyond the MVP with everything from example_target.cpp: `Join/Leave` (presence flags
+  travel inside the snapshot; a leaver's held items are released to host via logOwn `Transfer`;
+  sequence numbers are never reused, the leaver self-acks its queues), `Save/Load`
+  (`worldEpoch` bumps on load; requests carry their epoch and stale ones are rejected and
+  consumed so streams unstick; clients re-assert their pawn on new epochs), an ownership log
+  (`logOwn`: Grant/Release/Transfer for zombies and items) fed to the oracles, a host AI tick
+  that roams zombies, and stale-op raw replay.
 
 Test runs (real tools, executed here):
 
-- 200 clean sessions x 2/3/4 players: `RESULT: ALL OK` (600 in total).
-- Injected twin `no_snapshot_dedupe` (applies old snapshot): caught as `double_apply`
-  (3/3 sessions, shrunk scenario to 1 op) → the fuzzer does fail against this target, it is not a greenwash.
-- `--minutes 2 --players 4` caught 2 real bugs (shrunk to 1 op each) and are already fixed:
+- Clean: `--minutes 1 --players 2`: **12,265 sessions ALL OK**; `--minutes 3 --players 4`:
+  **14,428 ALL OK**; `--minutes 2 --players 3`: **16,858 ALL OK** (join/leave/save/load every
+  few seconds, stales, link chaos; totals above are the coverage counts).
+- `--minutes 2 --players 4` (previous round) caught 2 real bugs, shrunk to 1 op each, fixed:
   1. snapshot reading zombies/doors read flags 1 byte with a 4-byte read → desynchronization
      (pos bled with adjacent bytes, `(-1,-1)` in the shrunk report).
   2. On moving the HOST's own pawn, `version` was not incremented → the new position of P1
      never left the host.
-  After the fix: `--minutes 3 --players 4`: **17,928 clean sessions, 0 failed** (`ALL OK`).
+- `--minutes 1 --players 2` (this round, join/leave active) caught 5 more real bugs, all
+  shrunk + fixed, each found from the minimized report:
+  1. snapshot size assumed 4 players → with 2 players every snapshot was dropped forever
+     (session never quiescent).
+  2. brace-init `std::vector<uint8_t> door_{kDoors}` makes ONE element of value 4 → doors
+     desynchronized and out-of-bounds writes (replaced with constructor init lists).
+  3. request stream desynced across a leave/join: a request lost in flight was never acked,
+     and the host's strict in-order gate lagged the client's numbering forever (`gap request`
+     storm). Fix: leaver self-acks its own streams; window-1 retransmit; on rejoin the client
+     sends a `hello` (its frozen `reqHigh`) that the host adoptively applies to its gate.
+  4. requests replayed in flight after a counter reset executed twice (`double_apply`) —
+     fixed by never reusing sequence numbers (host retains per-peer counters).
+  5. hp-only snapshot changes were classified "no change" (change predicate compared alive/
+     pos but not hp) → damaged zombies healed back on clients after a while.
+- Injected twins, each caught (3/3 shrunk sessions):
+  `no_snapshot_dedupe` → `double_apply`; `no_request_dedupe` → `double_apply`;
+  `no_world_epoch` → `stale_applied`. The fuzzer fails against known bugs, not greenwash.
 
-Next (in order): worldEpoch/save-load + join/leave + ownership transfer in the target
-(using example_target.cpp as a model), then transcription to REFramework Lua + the C++ transport
-plugin (Steam relay recipe), and there the first 2 real copies with `tools/gamepool` + `tools/chaos`.
+Next: transcription to REFramework Lua + the C++ transport plugin (Steam relay recipe), then
+the first 2 real copies with `tools/gamepool` + `tools/chaos`.
 
 ## Unknowns to next steps
 
