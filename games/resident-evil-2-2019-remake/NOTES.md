@@ -253,6 +253,47 @@ Next: gamepool 2-instance pair (`local/re2.json`, `D:\coop-test\re2pool`, per-in
 `re2coopnet.ini` via `pairs.edits`), then `tools/chaos` bad_wifi relay over that pair, then
 real pawn data through the RE SDK (the synthetic world stays as the health check).
 
+### Milestone A(b): the same plugin driven by the gamepool launcher (2026-10-23)
+
+`local/re2.json` (gamepool config, gitignored tree): `game_dir` = test copy,
+`instances_root` = its own subdir, `launch {window: normal, stagger_s: 20}`,
+`ready {type: file, path: reframework/data/re2coopnet_ready.txt}` (the plugin writes this
+one-liner on start; the launcher deletes it fresh per launch), `pairs {port_base: 27960,
+copy_gb: 3.0, reserve_gb: 4.0, edits}` templating a per-instance
+`reframework/data/re2coopnet.ini` with `role={role} port={port} pair={pair}` — the plugin's
+env vars are a fallback, the INI is what gamepool-controlled runs actually use.
+
+Config-schema kills learned while doing it (candidates for `tools/gamepool` docs/PR
+feedback):
+
+- `link.per_instance_dirs` is not a default: without `["reframework/data"]` the link
+  stage **hard-linked our mod's own evidence (status txt, apply/own jsonl, lua leftovers)
+  from the test install into the fresh instances** — invisible until the inode check
+  (`os.stat(...).st_ino == source.ino`), because per-instance renaming looked fine.
+- a `config_files` key and the `pairs.edits` key must be the same string
+  (`reframework/data/re2coopnet.ini`, not `re2coopnet.ini`), and a file absent from the
+  install only needs the `edits` (empty base is legal); a file present anywhere in
+  `per_instance_files` mirrors it private.
+- `up` didn't block on the ready file with 0 bytes — the file probe passed on
+  *existence*, but our `re2coopnet_ready.txt` was empty because `JsonlLog` relied on
+  process-exit flush: **flush now runs in the 1 Hz timer** so live evidence collects.
+
+`provision --pairs 1` + `up --pairs 1` result — two real RE2 copies from
+`D:\coop-test\re2pool\{0,1}`, plugin loaded in both (their own `re2_framework_log.txt`,
+pump-rate lines sane), pair synced on loopback port 27960:
+
+- host: `progVer=3146 own=51 tx=rx=1383 txErr=0 txDrop=703` (pre-peer-learn drops),
+  `peer=127.0.0.1:61779` — learned the client's ephemeral port from the wire;
+- client: `myVer=3158 applied=3260 tx=rx=1388 txErr=0`, `peer=127.0.0.1:27960` (the
+  templated port), client/host versions within one snapshot cycle;
+- `apply_host_36840.jsonl` grows while the game runs (flush fix), instance data dirs now
+  contain only current-pid files.
+
+Plugin deps: `Session::openLogs` also writes `re2coopnet_ready.txt` (probe target);
+`JsonlLog` gained `flush()`. Known leftovers: dbg counters (`pumps/pawn/spawn/door/hit`)
+intentionally kept until QA ship; the wide `%s` bug in the start reLog replaced with a
+narrow summary.
+
 ## Unknowns to next steps
 
 - Two-copy loopback pawn sync test (needs a test copy of the game on another drive).
