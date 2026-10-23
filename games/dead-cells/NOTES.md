@@ -90,3 +90,11 @@ Root causes found in bytecode:
 - Venus flytrap = en.ltrap.CarnivorousPlant; fixedUpdate only checks pr.Game.ME.hero. Run with game.hero = nearest.
 - Dupe exploit: P1 dropped SeismicStomp via P1's ReplaceItem (outside pick depth, new InventItem instance) and P2's
   pick copied it. Now: owned by permanentId, drops during any replace menu / dropAndUpdateItem never copied.
+
+## Playtest 4 (v0.3.0) -> v0.3.1
+- Both bugs were one regression of mine: v0.3.0 pointed P2's HUD at P1's counters; HUD.onResize does
+  aboveMapFlow.getProperties(bossCellCount).paddingRight -> null (counter not in P2 HUD's flow) -> P2 HUD creation
+  failed -> error path destroyed P2's HUD, and HUD.onDispose (f@5346) sets this.minimap.destroyed = true -> P1's shared
+  minimap died -> LevelTransition ctor (ZDoor, Giant's broken door) crashed on null getTile.
+- Fix: share only the minimap; always null hud2.minimap before destroying hud2; restore HUD.ME if dispose cleared it.
+- Process lesson: build.sh hid a failed build and an old dll was staged once; build.sh now fails on build errors.
