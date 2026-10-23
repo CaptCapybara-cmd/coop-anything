@@ -61,3 +61,16 @@ Cosmetic, owner OK to leave: P2 has no head.
 - Deploy lesson: re-committing the same staged path to the PC silently wrote the PREVIOUS build (owner ran
   v0.1.1 again). Always stage each build under a new versioned folder and verify by reading it back (SHA-256)
   and checking the "[LocalCoop] vX loaded" log line. v0.2.0 dll sha256 b155a45c...de6c6 verified on PC.
+
+## Playtest 2 (v0.2.0) -> v0.2.1
+- P1 freeze on P2 menus: FIXED (confirmed by owner).
+- Crash: Null access .isFullscreen in Hero.updateInteraction (P2 preUpdate) and 5x ItemDrop.minimapTracking null:
+  v0.2.0 swapped game.hud/HUD.ME to P2's HUD during P2's update; P2's HUD has no minimap. v0.2.1 never swaps
+  game.hud; hero->HUD reports (setHealings, updateAmmo, tiers, buffs...) made while P2 acts are routed to P2's HUD.
+- Starting pipes are the ARMORY: en.inter.ArmoryButton.onActivate (f@23374) drops ItemDrops within 3 cells of the
+  pulled switch (inArmory=false, gravity) and retracts every other ItemDrop in the room (tween up), other switches
+  deactivate. Random*Spawner.spawnItem hook never fired for them. v0.2.1: co-op armory - each player pulls their own
+  switch; first pull releases that tube only (reserved for that player), partner pulls another tube or gets a copy
+  of the same one; switches turn off only after both chose. Items still inArmory can't be taken.
+- P1 counters: HUD.rightFlow spans the whole screen and bottom-aligns; set verticalAlign=Top to move them up.
+- Map = action 9 = pad SELECT (Share/Create/View), keyboard Tab (Options.configController f@5790).
