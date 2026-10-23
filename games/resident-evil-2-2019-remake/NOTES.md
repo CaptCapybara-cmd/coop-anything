@@ -294,6 +294,37 @@ Plugin deps: `Session::openLogs` also writes `re2coopnet_ready.txt` (probe targe
 intentionally kept until QA ship; the wide `%s` bug in the start reLog replaced with a
 narrow summary.
 
+### Milestone A(c): chaos relay between the two real copies (2026-10-23)
+
+Setup: gamepool pair `down`ed after provisioning; `tools/chaos/chaos.py relay --target
+127.0.0.1:27960 --listen 27961 --profile lan` (packet log + info file under
+`local/mod/RE2Online/out/chaos/`); the client instance's private
+`reframework/data/re2coopnet.ini` edited by hand to `port=27961` (the client targets
+`port`; the host's stays 27960), both copies launched manually from their instance dirs so
+the launcher's `GAMEPOOL_*` env doesn't override the ini. Lesson: gamepool's env injection
+always wins over the ini, so a relay in front of a pool pair needs either a templated
+`peer`/port trick in `pairs.edits` per experiment or manual launches — noted for the
+`tools/gamepool` feedback PR.
+
+Results (client `myVer` vs host `progVer`, all statuses from per-instance files):
+
+- `lan` baseline: 1072 vs 1079 (in-flight ≈ latency window), tx=rx line-to-line.
+- `bad_wifi` 60 s: 4164 vs 4170, host tx 2542 / rx 2475 (delayed + burst-dropped), rejects
+  up with `lastWhy=old snapshot` (reorder dedupe working).
+- `partition` s2c 4 s: client world freezes ~120 versions behind, then fully heals in
+  under 20 s (6112 vs 6099, zero in-flight) — the hello-window resync covers a blackout.
+- `hell` 60 s: 6652 vs 7602 (~950 behind under 8% loss + bursts + 200 ms + 512 kbit cap) —
+  bent, never broke: no crash, no runaway, reject dedupes keep arriving. tx=7038 vs
+  rx=4684 on the client ≈ the c2s rate cap queue doing its job.
+- relay self-stopped at 420 s (`--seconds`), and the pair kept running silently against a
+  dead relay for the remaining window: worlds froze, no spam, `txErr=0` — clean outage.
+
+Relay packet log: 9,824 datagrams, 9,355 fwd / 469 dropped, event lines: profile, partition
+on/off, profile. RPC via PowerShell CLI mangles quoted params — use
+`tools/chaos/client.py` from Python (README note worth adding to the chaos page).
+
+Next: real pawn data through the RE SDK (the synthetic world stays as the health check).
+
 ## Unknowns to next steps
 
 - Two-copy loopback pawn sync test (needs a test copy of the game on another drive).
