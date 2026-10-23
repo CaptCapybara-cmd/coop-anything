@@ -33,3 +33,11 @@ Goal (owner): local couch co-op, one PC, two gamepads, two real heroes; per-play
 
 ## Status
 - v0.1.0 built and copied to <game dir>\coremod\mods\DeadCellsLocalCoop. QA level: untested (not yet run in game).
+
+## Owner design backlog (decide after first working test — do NOT implement yet)
+- Camera v2 (owner idea, 2026-10-23): camera centred on the players' midpoint and *drags* left/right/up/down
+  according to each character's offset from the centre (soft dead-zone / look-ahead), instead of only moving
+  when both players push the same edge. Reason: with the v0.1.1 hard screen-bound, both players must crowd
+  the screen edge to move forward, which makes them run blind into enemies/traps and is risky on high-altitude
+  biomes with moving platforms and pits (e.g. cloud/tower maps). Revisit once the base mod works in-game.
+- Current state: v0.1.1 = midpoint camera + hard horizontal screen-bound + vertical pull-back after 1.5 s.
