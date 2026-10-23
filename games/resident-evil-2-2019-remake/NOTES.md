@@ -131,6 +131,39 @@ Environment steps (PowerShell) that are required for running it, recorded in `lo
 4. A deleted build directory (`${env:TEMP}\cofr-flight-build`, `$env:TEMP\coop-mutants-build-*`)
    forces the new generator.
 
+## Sync protocol prototype (phase 5 started, 2026-10-23)
+
+`tools/fuzz/re2_target.cpp` (in the fork; temporary home until the mod has its own repo) wraps
+the protocol MVP we plan to transcribe into the RE2 mod, as a coopfuzz target (test runs without
+the game, verified with the framework's own oracles):
+
+- Model: 2-4 machines, machine 0 = host (P1/campaign). Each machine simulates its own pawn and
+  sends it to the host with a `seq` + ack/retransmit; the host replies with a versioned snapshot
+  (pawns + zombies + doors + item holders), applied only if `version > myVersion`
+  (per-thing `idem`), retransmitted until the client's ack, which allows it to stop.
+- Interactions as requests to the host with SNAPSHOT replication: doors (interact), items
+  (pick up → machine buys it), spawning a zombie (one-time per site, double request = clean
+  rejection), damage to a zombie (host). `join/leave/save/load/stale` outside of this MVP
+  (documented): they are left for the lib prototype with ownership/worldEpoch
+  (the complete example target in example_target.cpp already covers exactly that, it is the model
+  to expand to).
+
+Test runs (real tools, executed here):
+
+- 200 clean sessions x 2/3/4 players: `RESULT: ALL OK` (600 in total).
+- Injected twin `no_snapshot_dedupe` (applies old snapshot): caught as `double_apply`
+  (3/3 sessions, shrunk scenario to 1 op) → the fuzzer does fail against this target, it is not a greenwash.
+- `--minutes 2 --players 4` caught 2 real bugs (shrunk to 1 op each) and are already fixed:
+  1. snapshot reading zombies/doors read flags 1 byte with a 4-byte read → desynchronization
+     (pos bled with adjacent bytes, `(-1,-1)` in the shrunk report).
+  2. On moving the HOST's own pawn, `version` was not incremented → the new position of P1
+     never left the host.
+  After the fix: `--minutes 3 --players 4`: **17,928 clean sessions, 0 failed** (`ALL OK`).
+
+Next (in order): worldEpoch/save-load + join/leave + ownership transfer in the target
+(using example_target.cpp as a model), then transcription to REFramework Lua + the C++ transport
+plugin (Steam relay recipe), and there the first 2 real copies with `tools/gamepool` + `tools/chaos`.
+
 ## Unknowns to next steps
 
 - Two-copy loopback pawn sync test (needs a test copy of the game on another drive).
