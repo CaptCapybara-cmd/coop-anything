@@ -182,8 +182,52 @@ Test runs (real tools, executed here):
   `no_snapshot_dedupe` → `double_apply`; `no_request_dedupe` → `double_apply`;
   `no_world_epoch` → `stale_applied`. The fuzzer fails against known bugs, not greenwash.
 
-Next: transcription to REFramework Lua + the C++ transport plugin (Steam relay recipe), then
-the first 2 real copies with `tools/gamepool` + `tools/chaos`.
+## Phase 6 in progress: the mod (REFramework plugin transport)
+
+Decision (2026-10-23): the sync core does NOT move to Lua. REFramework's Lua has no
+sockets/multithreading, and the embedded Lua is vanilla 5.4 built into REFramework privately
+(no exported Lua C API for plugins to call). So: a C++ REFramework plugin
+(`local/mod/RE2Online/`) for transport + the fuzz-validated core, with re2coop's file-bridge
+pattern as precedent.
+
+- REFramework plugin API verified against the pinned source
+  (commit `d4611aef1d63effd3a736bdf9404ea702428017d`): exports
+  `reframework_plugin_required_version` (fills major/minor/patch from `API.h` macros 1.15.0)
+  and `reframework_plugin_initialize(param)`; `param->functions` gives `log_info` +
+  `on_present(cb)` (the frame pump), via `<reframework/API.h>` (the versioned C header; the
+  `API.hpp` wrapper needs C++20 and is avoided).
+- The mod reuses `tools/fuzz/re2_target.cpp` verbatim (single source of truth): the fuzz
+  harness (`Re2Target` + registrar) is compiled out with `COOPNET_MOD_CORE_ONLY` (verified:
+  fuzz still passes, 12,288 sessions ALL OK); the plugin compiles that file and drives
+  `Re2Core` exactly like the fuzzer's adapter (50 ms `tick()`, 200 ms `hostWander`).
+- `local/mod/RE2Online/plugin/plugin.cpp` (~440 lines, builds with cl.exe /std:c++17 /LD,
+  ws2_32): UDP loopback (host binds the pair port and learns the client's address from its
+  first datagram; client binds an ephemeral port and targets `127.0.0.1:<port>`), rx thread →
+  present-thread pump, config from env (`GAMEPOOL_ROLE`/`GAMEPOOL_PAIR`/`GAMEPOOL_PORT`/
+  `GAMEPOOL_INSTANCE`, injected by `tools/gamepool` launcher.py:174-177) with an INI fallback
+  (`reframework/data/re2coopnet.ini`, what `pairs.edits` can write per instance).
+- Evidence, written by the plugin: `reframework/data/re2coopnet/apply_<role>_<pid>.jsonl`
+  (every accepted/rejected apply with idem/seq/why) and `own_<role>_<pid>.jsonl` (Grant/
+  Transfer/Release/WorldEpoch), plus a 1 Hz `reframework/data/re2coopnet_status_<role>_<pid>.txt`
+  JSON status; periodic `COOPNET:` lines land in `re2_framework_log.txt`.
+- Synthetic "world" for milestone A: local pawn patrol (moves every 700 ms), host spawns
+  zombies/roams/toggles doors/hits (via the real request stream), client picks up / drops
+  items — full protocol paths, no RE SDK calls yet.
+
+**First integration evidence, no game needed** (25 s loopback pair test,
+`local/mod/RE2Online/run_pair.ps1`, two `coopnet_standalone.exe` copies of the plugin driven
+by a fake REFramework param, host binds 27960 / client env `GAMEPOOL_ROLE=client`):
+
+- host 27304: `progVer=3448 own=542 applied=2643 tx=1494 rx=1493 txErr=0`,
+  peer learned at `127.0.0.1:62473`; client 12432: `myVer=3437 applied=2252 moves=804
+  mreqs=804`, rejects are the expected dedupe lines (`no change`).
+- JSONL sanity: host own-log shows Grant/epoch chains (refs 512+ = kEnemyBase, epochs
+  incrementing); client apply-log shows `playerpos` ref 256 (kPawnBase) + `spawn` applies;
+  idem keys shaped `0x2…` (snapshot)/`0x4…` (pawn) as in the fuzz report format.
+
+Next: first smoke INSIDE the game (launch `D:\coop-test\re2\re2.exe` with the plugin; check
+`re2_framework_log.txt` COOPNET lines + status file ticking), then a gamepool 2-instance
+pair, then chaos relay, then real pawn data via the RE SDK.
 
 ## Unknowns to next steps
 

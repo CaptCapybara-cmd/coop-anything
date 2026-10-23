@@ -543,6 +543,11 @@ private:
     bool helloPending_ = false;   // client: the post-join gate resync is not acked yet
 };
 
+// Everything below is the fuzz harness (an ITarget + its registration). The mod plugin reuses this
+// file for Re2Core only, so with COOPNET_MOD_CORE_ONLY defined the harness does not compile there
+// (TargetBase's implementations live in the coopfuzz lib, not in the mod).
+#ifndef COOPNET_MOD_CORE_ONLY
+
 // ============================================================ the adapter the fuzzer drives
 class Re2Target : public TargetBase {
 public:
@@ -777,6 +782,8 @@ const TargetRegistrar kRegisterRe2(TargetInfo{
     "RE2 remake online prototype: host-authoritative versioned snapshot + ordered request streams + world epoch (save/load, join/leave, ownership epochs), 3 bug classes",
     {"no_snapshot_dedupe", "no_request_dedupe", "no_world_epoch"},
     makeRe2});
+
+#endif  // COOPNET_MOD_CORE_ONLY
 
 }  // namespace
 }  // namespace coopfuzz
