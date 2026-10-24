@@ -186,3 +186,16 @@ Root causes found in bytecode:
 - Diverse Deck Watcher: charge stored in game.data.gameFlags[DiverseDeckWatcher.gameDataChargekeyName] -> shared.
   P2's Watcher methods run with that static name swapped to "<name>_coopP2".
 - Still open: P2 floating after double jump (random, no trigger found).
+
+## v0.7.1 (owner request, no playtest yet; verified on PC, sha256 96fa6304...)
+- "Find other places like the bank keycard": bytecode scan (gamecode/invscan.py: functions doing
+  X.hero.inventory.hasItem/countItemKind/removeOne) found key checks on game.hero only in: LockedDoorButton (key/card
+  doors), BankSubTeleporter.get_heroHasCard, CemeteryGraveCave.hasKey/consumeKey, HiddenTrigger.trigger (trigger zones
+  incl. boss rooms), Merchant.talk, EliteShrine, BreakableGroundConditional, RedTeleporter, VineLadder, HomonFountain,
+  TopLighthouseGetAway, Mob.onDie/checkForExecute (item effects, not keys).
+- Fix: shared key ring. Inventory.countItemKind/hasItem/removeOne on a player's inventory also see the partner's KEYS
+  (ids *Key, *Key<n>, *Keycard, ALKey*; not Meta* runes, Richter*, skins). Using a key the asked player lacks
+  takes the partner's.
+- Boss doors: the anchor is now whoever stepped on the HiddenTrigger that started the boss cinematic (P1 or P2).
+- Not found in code: a "rose key" item; Rose ids are room names (RoseKeyConverter*) - covered by the key ring if
+  their keys follow the *Key naming.
