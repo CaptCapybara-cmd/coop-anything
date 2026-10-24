@@ -171,3 +171,18 @@ Root causes found in bytecode:
 - GamePad toggle indices: A0 B1 X2 Y3 Back4 Start5 LT6 RT7 LB8 RB9 L3 10 R3 11 Dpad12-15 (from the MAPPING init).
 - Tooling: gamecode/dumpall.py writes gamecode/alldis.txt (all functions, call targets named) - grep it instead of
   decompiling one function at a time.
+
+## Playtest 9 (v0.6.0, first full run start to Bank: "fully playable with minor issues") -> v0.7.0 (verified on PC, sha256 dbd3c5f8...)
+- Confirmed working: L3 regroup (used constantly), per-player altars, fountain, forge, P2 pause, prompts (no complaint).
+- Shop/decline infinite copies + occasional 3rd copy: the partner's copy was made right after Hero.pickItem returned,
+  but the pick can still be undecided (ReplaceItem screen, shop confirmation) and declined. Now the copy waits until the
+  pick is really done (source destroyed / item moved / altar disabled / item in inventory); a declined pick (no pick
+  menu open, item still in place) makes no copy and un-marks the item as owned. Shop booths (ShopBooth.buy is deferred,
+  outside onActivate) never make copies.
+- Boss arena: cine.EnterRoomBoss & co. call BossDoor.closeAndLock (f@8875) when P1 (game.hero) walks in; the partner is
+  brought inside if the door separates them.
+- Bank keycards: LockedDoorButton.hasKey (f@25290) counts keys in game.hero's inventory only. The card reader now runs
+  as whichever player carries the key (canBeActivated/onActivate/onFocus).
+- Diverse Deck Watcher: charge stored in game.data.gameFlags[DiverseDeckWatcher.gameDataChargekeyName] -> shared.
+  P2's Watcher methods run with that static name swapped to "<name>_coopP2".
+- Still open: P2 floating after double jump (random, no trigger found).
