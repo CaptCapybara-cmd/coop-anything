@@ -141,3 +141,33 @@ Root causes found in bytecode:
   The mutation room's door (PerkMaster.setDoor f@26126, opened when getAvailablePerks()==0 for game.hero) now waits
   for both players. New escape hatch: P2 holds Back/Select 1.5 s -> P1 is brought to P2.
 - Not reproduced: the exact door from bug 8 (no screenshot of it kept); if it is not a TriggeredDoor, use the regroup.
+
+## Playtest 8 (v0.5.0) -> v0.6.0 (built, sha256 66f88974...; deploy waits for the game to be closed)
+- Fountain per player, forge as P2: confirmed working in the log.
+- Prompts stuck on keyboard (again): root cause found. Haxe enum values without arguments are singletons and the game
+  compares them by pointer (Controller.updateMainMode f@2447 vs g@15232/g@15009, ControlIcon.setAction f@4401 reads
+  Boot.ME.controller.mainMode). `new MainMode.MM_*()` from C# creates a third value equal to neither -> icons frozen on
+  keyboard and the game's own switching dead. Note HaxeEnum's C# ==/!= compare by index, hiding this. The real singletons
+  are captured from the game (updateMainMode with keyboard-only mode; onAnyPadEnabled on an empty list) on P2's controller.
+- Minimap: minimapCont is a child of the rightFlowR flow (positions children on reflow, so x writes were undone).
+  Now FlowProperties.isAbsolute + globalToLocal to put it top-left. Visibility left to the game (boss bars hide it).
+- P2 pause: Game.update opens ui.pause.DefaultPause on action 8 of game.controller only. P2's Start (GamePad index 5)
+  now opens DefaultPause in P2's scope with P2's controller (same pattern as other menus).
+- Scythe ghosts: the spawn closure (f@36200, tool/weap/AdeleScythe.hx) passes game.hero as parent. Ctor hook swaps the
+  parent to P2 when the scythe item is in P2's inventory.
+- Diverse Deck: pow.DiverseDeckBase.doActive reads owner._level.game.hero (transformInventoryItem on P1). doActive of all
+  deck variants + Base.fixedUpdate run in the power owner's scope. P2's own hero update runs with game.hero = P1
+  (AsP2Acting swapHero:false), so other skills that read game.hero may show the same bug.
+- Kills doubled: Mob.notifyHeroOfDeath (f@1062) calls onMobDeath -> addKillCount on every living hero. Now counted once
+  per mob (same hero may still add twice, e.g. Scissor).
+- Selling: ItemDrop.recycle (f@10054) destroys the drop; a parity copy for the partner is now left like for picking.
+- Reward altars (owner idea: one room per player): instead, each player chooses. ItemAltar.disable(picked) (f@16519)
+  disables every altar in the same room+row; on the first pick those are kept enabled for the partner only (plus the
+  parity copy of the first pick). Partner's pick (altar or copy) closes the group.
+- Life bars: HUD.updateLifeSize (f@5325) widens the bar 217..350px with max life; in co-op a HUD that would cross the
+  middle is called again with overrideMaxLife=1.0 (= smallest bar).
+- Door after the cursed chest still closed (image: orange barred door next to the chest). Owner asked for a button:
+  L3 (GamePad index 10, "analogClick") - P1's L3 brings P2 to P1, P2's L3 brings P1 to P2. Replaces P2's Select-hold.
+- GamePad toggle indices: A0 B1 X2 Y3 Back4 Start5 LT6 RT7 LB8 RB9 L3 10 R3 11 Dpad12-15 (from the MAPPING init).
+- Tooling: gamecode/dumpall.py writes gamecode/alldis.txt (all functions, call targets named) - grep it instead of
+  decompiling one function at a time.
