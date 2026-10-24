@@ -105,3 +105,16 @@ Root causes found in bytecode:
   MiniMap.initUI reflow null .x -> P1 HUD crash. Lesson: never share HUD sub-objects between two HUD instances.
 - v0.3.2: P2 HUD shares nothing; no global HUD.ME swap (only inside Hero.updateLifeBar); any exception inside
   P2's HUD code is caught and logged once instead of crashing (P2 HUD is cosmetic).
+
+## Playtest 6 (v0.3.2, first session with no crash) -> v0.4.0 (verified on PC, sha256 f04cc7aa...)
+- Cooldown icons flickering + "ready" sound loop on P1's HUD: BeheadedActiveSkillsManager.fixedUpdate (f@23217) gets
+  icons via HeroActiveSkillsManager.hudGetSkillPower -> ui.HUD.ME.skillPowers; P2's manager wrote P2's timers into P1's
+  icons every frame. Scanned bytecode (gamecode/hudscan.py) for every tool/hero, en/Hero, mainSkills, weapon function
+  reading the HUD global (g@426): 39 functions. All per-hero ones now run with HUD.ME = owner's HUD (HudRouting.cs);
+  shared ones (money, cells, minimap, death flow) stay on P1's HUD.
+- Scroll given twice: P1 property was game.hero, which is P2 during P2's turn -> Partner(P2) returned P2. P1 is now a
+  stored reference; and a TierSelect's resulting applyItemPickEffect (e.g. SurvivalUp from AnyUp) is not re-shared.
+- P1 locked after P2 used a teleporter: MiniMap.fullscreen (f@3314) makes minimap.controller exclusive on P1's controller,
+  MiniMap.restore releases whatever access the map holds. Now: release P1's access when handing the map to P2, give P2 an
+  exclusive access, dispose it when the map closes.
+- Open: P2 floated after a double jump until down-slamming (owner: temporary). Cause unknown - need repro conditions.
