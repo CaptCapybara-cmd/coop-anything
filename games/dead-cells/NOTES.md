@@ -199,3 +199,17 @@ Root causes found in bytecode:
 - Boss doors: the anchor is now whoever stepped on the HiddenTrigger that started the boss cinematic (P1 or P2).
 - Not found in code: a "rose key" item; Rose ids are room names (RoseKeyConverter*) - covered by the key ring if
   their keys follow the *Key naming.
+
+## v0.8.0 (owner requests; verified on PC, sha256 fa4e226c...; not playtested)
+- Choosing P1's controller: pads are ordered by hxd.Pad.index (stable per physical controller, so "black" was always
+  P1). New saved config SwapPads flips it. In game: hold Back+Start for 1 s on a controller -> it becomes P1 (rumble +
+  "PLAYER 1"/"PLAYER 2" pop text); F10 swaps from the keyboard. Pad names are now logged.
+- Outfit room / head room "simulation" (from bytecode): outfit = User.heroSkin, head = User.heroHeadSkin, ONE value in
+  the profile; every hero is drawn from it (Hero.getSkinInfo -> User.getHeroSkinInfos; HeroHead.init/initHead read
+  heroHeadSkin). Skinner/SkinSelector and TailorDaughter/HeadSelector open with P1's controller and apply to game.hero
+  (SkinSelector.close -> game.hero.applySkin, which also writes the profile). Before v0.8.0: P2 at the wardrobe would
+  have opened the menu for P1's pad and changed P1's outfit; P2 would then also take that outfit at the next door
+  (P2.initGfx re-reads the profile). Heads: same, and P2 has no visible head anyway.
+- Now: P2's activation opens the menu on P2's pad as P2; the choice is saved as P2Skin/P2Head in the mod config and the
+  profile is put back to P1's choice; P2 is drawn with P2Skin/P2Head (getSkinInfo/getGlowColorsData/HeroHead.init
+  run with the profile values swapped). The camera is put back on the shared view if a menu left it on P2.
