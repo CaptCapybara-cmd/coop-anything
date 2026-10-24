@@ -5,7 +5,7 @@
 | Engine | Dunia (a CryEngine 1 derivative), 32-bit x86. The 28 KB `FarCry2.exe` is a stub that calls `Dunia.dll!RunGame`; engine and netcode are in `Dunia.dll`, Lua game logic is in the archives |
 | Versions tested | Steam, app id 19900, version 1.03, build id 52164. `Dunia.dll` SHA-256 `6353936a54aa841350bb30ff005727859cdef1aa10c209209b220b399e862765` (20,183,176 bytes). Every address in this write-up is for that file. Reproduced on a second PC (Windows 11 23H2) with the identical file on 2026-10-24 |
 | Projects | No public co-op project. A research prototype (position puppet, below): https://github.com/MortyRei/fc2-coop-probe (MIT) |
-| QA level | none (the prototype was checked by hand and from its logs; there is no automated test) |
+| QA level | automated, for the position puppet only (two-copy walk test, 16/16 on 2026-10-24; see QA). Story, enemies and world state are not synced, so there is nothing to test there yet |
 | Last updated | 2026-10-24 |
 
 ## Where things stand
@@ -125,9 +125,40 @@ All changes are in test copies only; nothing touched the owner's install, profil
 
 ## QA
 
-No automated suite. What was checked, by hand and from logs, is listed with dates in
-[NOTES.md](NOTES.md). A real test would drive two copies with the probe's own commands and
-assert on the `net:` log lines and the entity positions; that harness does not exist yet.
+One automated test: `tests/two_copy_walk.ps1` in the probe repository (added in
+https://github.com/MortyRei/fc2-coop-probe/pull/1, not merged yet). It drives two real game
+clients on one PC; both copies must already be patched and have their test profiles.
+
+```
+powershell -ExecutionPolicy Bypass -File tests\two_copy_walk.ps1 -CopyA <test copy A> -CopyB <test copy B> -OutDir <results folder>
+```
+
+It starts both copies, presses Enter until each probe log shows its own save being opened,
+reads the player id through the Lua channel, runs `netstart` on both, walks copy A's player
+with `walk 3 20 2`, and samples `pos <avatar>` / `pos <player>` in copy B. It asserts: each copy
+reads its own profile and save; the same player id in both; the avatar's body differs from the
+local body; at least 10 packets/s each way; the avatar moves (span at least 1.5 x radius); the
+avatar stays within 1.5 m (mean) and 2.5 m (max) of A's position as received by B; B's own
+player drifts at most 0.5 m; no `CRASH` / `ACCESS VIOLATION` lines; the real profile folder is
+unchanged (snapshot before and after). A kill switch stops both copies if a log line names the
+real profile folder. It presses Enter in the game windows, so the keyboard must be left alone.
+
+Last results (2026-10-24, Steam 1.03, one PC, Windows 11 23H2):
+
+```
+probe with the avatar-body fix:
+RESULT: 16 checks, 0 failed -> PASS   (~2 min)
+  link A/B 16.0 / 16.0 packets/s; avatar span 5.92 m; distance to A mean 0.43 m, max 1.07 m;
+  B player drift 0.12 m; real profile: new 0, changed 0, removed 0
+
+negative control, probe before the fix:
+RESULT: 16 checks, 3 failed -> FAIL
+  B player stays put: max drift 16.46 m (B's own player dragged); avatar body A/B: no pointers in the old log line
+```
+
+The drift check is the one that catches the avatar-body bug; `avatar moved` and
+`avatar follows A` passed with the old probe too. Earlier checks, by hand and from logs, are
+listed with dates in [NOTES.md](NOTES.md).
 
 ## How to play
 
@@ -161,9 +192,7 @@ https://github.com/MortyRei/fc2-coop-probe (MIT); the game code is kept there, n
 2. Mission state: reproduce the set of active mission layers and Domino state in the
    second copy; `Game:MissionSetState` and `SaveGame` are the entry points seen.
 3. A real transport (hosted or direct, with a join code) instead of loopback ports.
-4. Add a test harness to the probe repository (two copies driven by its own commands,
-   asserting on the `net:` log lines and entity positions). The 2026-10-24 run did this by hand:
-   `walk` in one copy, `pos <avatar id>` and `pos <player id>` in the other every 2 s, a kill
-   switch on any log line naming the real profile folder, and a file snapshot of all profile
-   folders before and after; turning that into a script is the shortest path to `automated`.
+4. Extend the two-copy test as features land: heading (compare the avatar's direction with
+   the peer's), then mission state. It does not patch `Dunia.dll` or create the test profiles
+   yet; scripting those would make it runnable from a clean install.
 5. Find out what the 0xE089A0 string `My Games\Far Cry 2\` is used for.

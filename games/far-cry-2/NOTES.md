@@ -734,3 +734,21 @@ Unknown:
 - What the 0xE089A0 string is used for.
 - Whether new saves (autosave) also go to the test folder: no save was written in these runs.
 - Why the walked body rose 0.8 m after `walk` ended.
+## Automated two-copy walk test (2026-10-24)
+
+Script `tests/two_copy_walk.ps1`, added to the probe in https://github.com/MortyRei/fc2-coop-probe/pull/1.
+What it asserts is listed in the README's QA section.
+
+Observations (ran, same PC and copies as the section above):
+- Probe with the avatar-body fix (`dinput8.dll` SHA-256 `87cb733b...431c`): 16 checks, 0 failed, about 2 minutes
+  from start to kill. Copy A needed 8 Enter presses to reach its save, copy B 3. Avatar bodies differed from the local
+  ones in both copies; 16.0 packets/s each way; 17 avatar samples during the 20 s walk, all paired with a `remote`
+  position; avatar span 5.92 m; distance to A mean 0.43 m, max 1.07 m; B's own player drift 0.12 m; no crash lines;
+  real and test profile folders unchanged.
+- Negative control with the probe before the fix (`22ac2fea...8001`), same script: 3 checks failed. `B player stays
+  put`: max drift 16.46 m. `avatar body A/B`: the old log line has no pointers, so it cannot be compared.
+  `avatar moved` (span 16.01 m) and `avatar follows A` (mean 0.19 m) passed.
+
+Derived: with the bug both players are written to each other's position, so they move together (hence the 16 m
+drift and an "avatar" that seems to follow); only the check that the receiving copy's own player stays put tells the
+two cases apart.
