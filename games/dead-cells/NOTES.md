@@ -118,3 +118,26 @@ Root causes found in bytecode:
   MiniMap.restore releases whatever access the map holds. Now: release P1's access when handing the map to P2, give P2 an
   exclusive access, dispose it when the map closes.
 - Open: P2 floated after a double jump until down-slamming (owner: temporary). Cause unknown - need repro conditions.
+
+## Playtest 7 (v0.4.0, first full biome + Prison Depths) -> v0.5.0 (verified on PC, sha256 be83ca47...)
+- Map not revealed: the fog of war is painted while the minimap draws (MapMask.drawRec f@3522 -> MapFow.drawRec f@3430,
+  circle placed in MiniMap.postUpdate). v0.4.0 hid minimapCont, so nothing was ever revealed. Now the minimap stays
+  drawn but parked off-screen (x = -100000), back in place while the full-screen map is open or ShowMinimap=true.
+- P2 survival tier not shown on P2's HUD: some tier writes happen after P2's turn. Every frame the HUD tier numbers are
+  corrected from each hero's real tiers (Entity.survivalTier/brutalityTier/tacticTier vs HUD.tierBar.*.value).
+- Prompts stuck on keyboard after Esc: Controller.updateMainMode (f@2447) should switch back on a pad press; with P1
+  pinned to one pad it did not. Fallback: any activity on P1's pad (GamePad.lastActivity) switches P1 back to pad prompts.
+- Flytrap bounce: CarnivorousPlant.onTouch (f@26845) ignores any non-mob that isn't game.hero; P2's touches now run in
+  P2's scope. fixedUpdate prefers the hero standing on the plant over the closest one.
+- Minor forge showed P1's items: SmallBlacksmith.openUI (f@14941) builds ui.ForgeUnderground() from game.hero. Smith
+  onActivate runs as the activating player; ForgeUnderground/ForgeLegendary get P2's controller like the other menus.
+- HUD stacking after the end of biome 1: layout now reapplied every frame, P1 HUD alignment tracked per HUD instance,
+  P2 HUD rebuilt if the game destroyed it.
+- Fountain once only: Fountain.onActivate (f@13844) checks game.hero and sets `used`. Now one use per player
+  (per-fountain P1/P2 flags), run as the activating player. The single vial on higher difficulties is the
+  "FlaskRefill" ItemDrop from the Fountain ctor (genData.flaskRefill): now a per-player loot item (copy for partner).
+- Door soft lock (Prison Depths): TriggeredDoor.onDistantTrigger (f@21492) closes the door when a plate/trigger fires
+  again. If a closing door now separates the players, the other one is brought to the side of whoever closed it.
+  The mutation room's door (PerkMaster.setDoor f@26126, opened when getAvailablePerks()==0 for game.hero) now waits
+  for both players. New escape hatch: P2 holds Back/Select 1.5 s -> P1 is brought to P2.
+- Not reproduced: the exact door from bug 8 (no screenshot of it kept); if it is not a TriggeredDoor, use the regroup.
