@@ -752,3 +752,61 @@ Observations (ran, same PC and copies as the section above):
 Derived: with the bug both players are written to each other's position, so they move together (hence the 16 m
 drift and an "avatar" that seems to follow); only the check that the receiving copy's own player stays put tells the
 two cases apart.
+## Heading, network mode, Steam relay (2026-10-24, later)
+
+Observations (ran; one PC unless stated):
+- The player's physics body matrix is always identity (upright capsule) while the entity direction changes; mouse
+  look (relative `mouse_event`) turned the player: entity dir (-0.640, 0.768) -> (-0.913, -0.409), body unchanged.
+  Player entity rows: (d0, d1, 0), (-d1, d0, 0), (0, 0, 1).
+- On a script-spawned pawn: writing its body rotation sticks in the body but the entity dir stays (1,0);
+  `TeleportEntity(id, x, y, z, a, b, c)` returns and changes nothing (neither rotation nor position);
+  `SpawnEntityFromArchetype(..., 0, 0, 90)` gives dir (0,1) (last argument = yaw in degrees; radians or other axes
+  do nothing); writing the pawn's entity rotation rows sticks (still (0,1) 3 s later).
+- Probe change: the avatar's entity rotation rows get the received direction every tick (25 % smoothing).
+  Two-copy test with a mouse-turn phase: 18/18, A and B's avatar at 128.1/128.1, -145.4/-145.4, 149.8/149.8 deg;
+  without the change: avatar stayed at 0 deg (1 check failed).
+- Owner's view (both copies side by side): B's avatar turned with A, also when the owner turned A by hand.
+  My own screenshots never caught the avatar: the opening save's dialogue camera pans by itself; a pawn spawned
+  outdoors with a later save was not visible either, and an unpinned pawn moved by `tpb` fell through the
+  terrain (z 108.9 -> 63.0).
+- Network mode: peer not 127.x -> bind 0.0.0.0, only packets from the peer's IP count (`drop` counter). Test with
+  the PC's own LAN address: 19/19; 30 forged packets from 127.0.0.1 dropped.
+- Relay (`relay/fc2_relay.py`): udp stand-in and Steam (Spacewar, 64-bit ctypes over the flat API of
+  `steam_api64.dll` from Steamworks.NET Standalone 2025.164.1, SHA-256 eb17909a...fb75). Test through two udp
+  relays: 22/22. Steam host side on one account: init, friends-only lobby created and left.
+
+## Two PCs over Steam (2026-10-25)
+
+Setup: the first PC (host) and a second PC on a different network (Wi-Fi vs Ethernet, no ping between them), each
+with its own Steam account, the accounts friends; the second PC had never run the game. Same `Dunia.dll`
+(6353936a...2765) on both. The second PC was prepared from a kit (probe build, relay, scripts) plus the shared
+save and a test profile passed by hand.
+
+Observations (ran):
+- First attempt: the second PC's copy was patched at 0xE08950 and 0xE0E094 only. It read its own
+  `FC2test_B\GamerProfile.xml`, but Story Mode offered only New Story; the auto-Enter run never opened a save.
+  The first PC's copies also had 0xE089A0 patched (`My Games\FC2test_A\`). After patching 0xE089A0 on the second
+  PC its `Dunia.dll` matched the first PC's copy with the same three patches (SHA-256 e0fef7c2...) and the save
+  was listed and loaded (`CreateFileW ...\FC2test_B\saved games\222368278550.sav`).
+- Second attempt: host in the world and lobby created 13:05:54; the joining relay found no lobby on its first try,
+  found the friend in a Spacewar lobby on the second (13:05:56), entered it, the session was accepted, and the
+  first message decoded with the sender identity at offset 16. Avatars spawned on both sides (bound bodies differ
+  from the local ones).
+- Packets: about 16/s each way for ~7 minutes, dropped=0 in every relay stats line on both sides, peer never
+  down while both ran (joining side final tx 6711 / rx 6624).
+- `walk 3 20 2` on the host at about 13:06:40. Joining side, `pos <avatar>` every 2 s: about two circles between
+  ~13:06:58 and ~13:07:19, centre about (2587.3, 2459.2), radius about 3 m; the walk's centre is the start point
+  minus the radius in x, (2587.36, 2459.24), and 2 m/s x 20 s = 40 m = 2.1 circles of 18.85 m. The joining PC's own
+  player stayed within about 0.1 m. The avatar's dir stayed (-0.989, 0.151), equal to the host player's: `walk`
+  does not turn the player.
+- Owner (by eye): the avatar moved on the first PC's screen, and on the second PC it went round in a circle.
+- After the joining side stopped (13:13:00), the host's relay showed peer=down after its 20 s timeout.
+- No CRASH / ACCESS VIOLATION lines on either side; neither probe log named a real profile folder; the test
+  profiles were unchanged (the game saved nothing).
+
+Derived:
+- 0xE0E094 decides the profile and the save file that is opened; 0xE089A0 decides the folder the save list is
+  built from. The 2026-10-24 statement that 0xE089A0 is not needed was wrong.
+- The Steam relay carries the probe's traffic between two PCs without IP addresses or port forwarding.
+
+Unknown: heading across PCs (not exercised), invites and Join Game, behaviour over a longer session or with loss.
