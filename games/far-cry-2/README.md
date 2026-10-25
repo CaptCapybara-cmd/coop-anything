@@ -206,8 +206,21 @@ minutes with 0 dropped and no disconnect. `walk 3 20 2` on the host: on the join
 (sampled every 2 s) went round about two circles of radius ~3 m around the expected centre
 (2 m/s x 20 s = 40 m), while that PC's own player stayed within ~0.1 m; the owner saw the avatar
 move on both screens. When the joining side stopped, the host's relay marked the peer down after
-its 20 s timeout. Not covered: heading across PCs (`walk` does not turn the player), invites,
-Join Game. There is no scripted pass/fail for this run yet; the evidence is the two sides' logs.
+its 20 s timeout. There is no scripted pass/fail for these runs yet; the evidence is the two sides'
+logs.
+
+Later the same day, same two PCs (the joining relay in `--join wait` mode for the last two):
+- **Heading across PCs:** the host turned its player with the mouse 171.3 → 81.3 → -171.3 → 77.6
+  degrees; the joining PC's avatar (sampled every 2 s) showed the same four headings 1-2 s later,
+  staying in place.
+- **Steam invite:** host `--invite <name>`; the invite was accepted on the second PC, the relay got
+  callback 333, joined the lobby, and the link and avatar were up within 3 s.
+- **Join Game** from the Steam friends list (the host sent no invite): joined the host's new lobby,
+  also through callback 333 (Steam reports Join Game on a friend in a joinable lobby as
+  GameLobbyJoinRequested; 337 was not observed).
+- Every run: 0 dropped, no crash lines, no real profile folder in either probe log.
+
+Not covered: an invite or Join Game while the joining relay is not running, longer sessions, loss.
 
 ## How to play
 
@@ -244,5 +257,5 @@ https://github.com/MortyRei/fc2-coop-probe (MIT); the game code is kept there, n
 2. Mission state: reproduce the set of active mission layers and Domino state in the
    second copy; `Game:MissionSetState` and `SaveGame` are the entry points seen.
 3. Two-PC run with scripted checks (the joining side already samples the avatar; compare it
-   with the host's path), including a mouse turn for heading; then invites and Join Game.
+   with the host's path and headings automatically).
 4. Extend the two-copy test as features land (mission state next).

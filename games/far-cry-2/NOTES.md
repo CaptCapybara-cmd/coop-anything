@@ -810,3 +810,27 @@ Derived:
 - The Steam relay carries the probe's traffic between two PCs without IP addresses or port forwarding.
 
 Unknown: heading across PCs (not exercised), invites and Join Game, behaviour over a longer session or with loss.
+## Two PCs: heading, Steam invite, Join Game (2026-10-25, afternoon)
+
+Same two PCs and test copies as above; host with `scripts/start-coop.ps1 -Role host`, joining side with the same
+script (its relay patched with `--join wait`, byte-identical to the probe repository's).
+
+Observations (ran):
+- Heading: the host turned its player with relative mouse input, each direction held ~8 s: 171.3 (start), 81.3,
+  -171.3, 77.6 degrees (clocks of the two PCs agreed to ~1 s: "peer is talking" at 14:38:05 on both). The joining
+  PC's avatar, sampled every 2 s: 171.3 until 14:38:29, 95.7 at 14:38:31 (mid-turn), 81.3 from 14:38:33, -171.3 from
+  14:38:42, 77.6 from 14:38:52; position steady within a few mm.
+- Steam invite: the host relay logged "invite to <name> sent: True" when its lobby was created; the joining relay
+  waited ("waiting for a Steam invite or Join Game ..."); after the owner accepted the invite on the second PC
+  (about 3 minutes later) the relay logged callback 333 ("invite or Join Game accepted (lobby)"), entered the lobby,
+  and the first packets and the avatar followed within 3 s.
+- Join Game: a new host run without any invite created a new lobby; the joining relay waited; after the owner chose
+  Join Game on the host in the Steam friends list, it joined that new lobby, again through callback 333; no 337 was
+  logged. The earlier invite had pointed to the previous (closed) lobby, so this join came from Join Game.
+- All runs: dropped=0 in every relay stats line, no CRASH / ACCESS VIOLATION lines, no real profile folder in
+  either probe log; after a host stopped, the joining relay logged "peer silent for 20 s, dropped".
+- No "accepted session" line in these runs: both sides sent their first message at about the same time, so each
+  side's own send opened the session.
+
+Derived: for a friend who is in a joinable lobby, Steam delivers Join Game as GameLobbyJoinRequested (333), the same
+callback as an accepted invite; GameRichPresenceJoinRequested (337) would need a connect string without a lobby.
