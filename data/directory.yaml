@@ -7069,27 +7069,32 @@
   engine: Genome
   project: G3 Together
   url: https://github.com/GGM1k3y23/g3-together
-  other_urls: []
+  other_urls:
+  - https://github.com/GGM1k3y23/g3-together/releases
   kind: mod
-  status: alpha
+  status: playable
   coop_scope:
     players_visible: 'yes'
     story: 'yes'
     enemies: 'yes'
-    world_state: partial
+    world_state: 'yes'
     items: 'yes'
   players: '2'
   networking: direct-ip
   open_source: 'yes'
   last_activity: '2026-10'
   qa: automated
-  notes: 'Built from zero on the Gothic 3 SDK, ENet, GPL-3.0-or-later; work in progress. Steam CP 1.75.14. Bot suites
-    with two real game clients on one PC (each stage 3 passes plus a failing negative control): players, NPCs,
-    combat, quests, dialogs, items, trade, clock, saves and regional NPC ownership. Human review pending; internet
-    play, a full playthrough and more than two players untested. See games/gothic-3.'
+  notes: 'Full Gothic 3 campaign co-op for two players, built from zero on the Gothic 3 SDK and ENet,
+    GPL-3.0-or-later. Public beta v0.6.0 (2026-10-26) with setup in English, German and Polish. Shared: quests,
+    dialogs and story, enemies and combat, loot and chests, trade between players, freed towns and story moves,
+    town reputation, the clock and the host''s saves; a downed player can be revived. Every feature is covered by
+    bot suites driving two real game clients (187 runs for 0.6.0), and the bots played the story to Innos'' ending.
+    Needs Steam CP 1.75.14 and Parallel Universe Patch 1.1.1. Not yet played by people: the Adanos and Beliar
+    endings and more than two players. See games/gothic-3.'
   sources:
   - https://github.com/GGM1k3y23/g3-together
-  checked: '2026-10-20'
+  - https://github.com/GGM1k3y23/g3-together/releases/tag/v0.6.0-beta
+  checked: '2026-10-26'
 - game: Crimson Desert
   year: 2026
   engine: BlackSpace Engine

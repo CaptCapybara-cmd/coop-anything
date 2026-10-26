@@ -3,28 +3,32 @@
 | | |
 |---|---|
 | Engine | Genome; see the unofficial [Gothic 3 SDK](https://github.com/georgeto/gothic3sdk) |
-| Versions tested | Steam build 1037023, `Gothic3.exe` 1.75.20108.14 (Community Patch 1.75.14), x86, with Parallel Universe Patch files present |
-| Projects | [G3 Together](https://github.com/GGM1k3y23/g3-together) (own mod, built from zero on the SDK, GPL-3.0-or-later; work in progress, human review pending). Earlier projects: [OTHER-PROJECTS.md](OTHER-PROJECTS.md) |
-| QA level | automated (bot suites with two real game clients on one PC, each stage 3 passes plus a failing negative control) |
-| Last updated | 2026-10-21 |
+| Versions tested | Steam build 1037023, `Gothic3.exe` 1.75.20108.14 (Community Patch 1.75.14), x86, with Parallel Universe Patch 1.1.1 |
+| Projects | [G3 Together](https://github.com/GGM1k3y23/g3-together) (own mod, built from zero on the SDK, GPL-3.0-or-later; public beta, latest [v0.6.0-beta](https://github.com/GGM1k3y23/g3-together/releases/tag/v0.6.0-beta) of 2026-10-26). Earlier projects: [OTHER-PROJECTS.md](OTHER-PROJECTS.md) |
+| QA level | automated (bot suites with two real game clients on one PC, each stage 3 passes plus a failing negative control), plus a human co-op evening |
+| Last updated | 2026-10-26 |
 
 ## Where things stand
 
-With G3 Together two players can play the Gothic 3 campaign together over a direct IP
-connection: they see each other, fight the same NPCs, share quests, dialogs, items, the
-clock and the host's saves, and a downed player can be helped up. Every stage is proven by
-bot suites that drive two real game clients on one PC. A first short human look (two
-windows on one PC) found two bugs the bots had missed; both are fixed and re-tested by
-bots, not yet by people. Not verified: play over the real internet, a full story
-playthrough, more than two players.
+G3 Together makes the whole Gothic 3 campaign playable for two players. It is a public
+beta ([releases](https://github.com/GGM1k3y23/g3-together/releases), latest v0.6.0-beta of
+2026-10-26) with a one-click setup in English, German and Polish. Players connect over
+direct IP or a virtual LAN such as Hamachi. They see each other on screen, map and
+compass, fight the same enemies, share quests, dialogs and story moves, freed towns, loot,
+town reputation, the clock and the host's saves, trade with each other and revive a downed
+partner. Every feature is covered by bot suites that drive two real game clients; for
+0.6.0 that was 187 runs, and the bots played the main story to Innos' ending. People have
+played it together for an evening. Still to be played by people: the Adanos and Beliar
+endings and sessions with more than two players.
 
 ## Existing work
 
-- **G3 Together** (this project, 2026-10-17 to 2026-10-19): a native script DLL built on
+- **G3 Together** (this project, since 2026-10-17): a native script DLL built on
   the Gothic 3 SDK, with [ENet](https://github.com/lsalzman/enet) 1.3.18 (MIT) for direct
   IP. Host plus clients, regional NPC ownership, host-kept ledger for story, items and
   the campaign save. GPL-3.0-or-later. Source: [GGM1k3y23/g3-together](https://github.com/GGM1k3y23/g3-together)
-  (work in progress, no release yet). Details below and in [NOTES.md](NOTES.md).
+  (public releases since 2026-10-22, beta since 2026-10-25, latest v0.6.0-beta). Details below and in
+  [NOTES.md](NOTES.md).
 - Earlier projects: Myrtana Accord (tested: only quest state is shared; players do not
   see each other, no NPC or combat sync, rejoining is refused), Gothic 3 Heroes and
   Sative's Gothic 3 Multiplayer (no download available to test). None of them gave usable
@@ -216,7 +220,13 @@ unchanged real saves. At the end of every two-player suite, invariant monitors c
 the NPCs near both heroes three times, 3 s apart (report only, they do not fail a
 suite).
 
-Last results (2026-10-19, details and run IDs in
+Latest (2026-10-26, v0.6.0-beta, mod commit `ef449a3`): full regression of 187 runs on
+three PC pairs, 181 passed in 121 min. The six reds were rechecked: `stageA` and
+`stageTreasure` passed on rerun; `stageP2hit` (the test shooter rarely reaches its target)
+and `stageObserveSuspect` (measured too late) are known test-side reds; `stageUpset` is also
+red with the 0.5.1 build, and the measurement `friendlydiag` passed 2 of 3 times.
+
+Earlier results (2026-10-19, details and run IDs in
 [RUNTIME-QA-G3TOGETHER.md](RUNTIME-QA-G3TOGETHER.md)):
 
 | Series | Result |
@@ -232,18 +242,28 @@ lifetime) are in [RUNTIME-QA-G3TOGETHER.md](RUNTIME-QA-G3TOGETHER.md#results-202
 
 ## How to play
 
-G3 Together has no public release yet. The owner hands a player package (DLL, example
-INIs, German player guide, log collector) to testers privately; a release will
-follow after human playtesting. Building from source: see the repository README. In short: same Steam version with Community Patch
-1.75.14 and the same options on every machine (the mod checks at join), the DLL in
-`<game dir>\scripts\`, a `g3together.ini` with `role`, the host's `address` and `name`.
-For the internet the guide suggests a virtual LAN (Tailscale or ZeroTier) or a forwarded
-UDP port; that path is untested. Do not mix it with another co-op DLL in `scripts/`.
+Download the mod package from the [releases](https://github.com/GGM1k3y23/g3-together/releases)
+(not GitHub's source ZIP) and run `Setup.cmd` (`Einrichten.cmd` in German, `Instalacja.cmd`
+in Polish) on both PCs. Both need the same Steam version with Community Patch 1.75.14,
+Parallel Universe Patch 1.1.1 and the same mod release (the mod checks at join; 0.6.0 uses
+network protocol 56 and does not connect to 0.5.x). The host allows Gothic 3 through the
+firewall on UDP port 34567; over the internet the guides describe Hamachi, Tailscale or
+ZeroTier, or a forwarded port. Player guides in English, German and Polish are linked from
+the repository README. Do not mix it with another co-op DLL in `scripts/`.
 
 ## Known issues
 
-State of the mod's `master` `d0cdb38` (2026-10-21): its player guide's known problems
-plus the static findings in [NOTES.md](NOTES.md). Static findings are marked; they were
+Current list: the mod's [known limitations](https://github.com/GGM1k3y23/g3-together/blob/main/docs/PLAYING.md#known-limitations)
+and the [v0.6.0-beta release notes](https://github.com/GGM1k3y23/g3-together/releases/tag/v0.6.0-beta).
+Not yet played by people or not set up by the bots: the Adanos and Beliar endings, Xardas'
+plan, the fifth temple, the Cape Dun uprising, freeing a town mid-game, drive-away quests
+and plundering, swimming forward, the trade window's mouse controls. Telekinesis and the ice
+and fire spells that put out burning or freezing act on the other player's NPCs only on the
+caster's PC.
+
+The list below is the state of the mod's `master` `d0cdb38` (2026-10-21): its player
+guide's known problems plus the static findings in [NOTES.md](NOTES.md); some items have
+been fixed since. Static findings are marked; they were
 read from code and archived logs, not reproduced at runtime.
 
 - Crashes: the game can still crash in a fight or shortly after an enemy dies. The known
@@ -290,7 +310,7 @@ read from code and archived logs, not reproduced at runtime.
 
 ## Next steps
 
-- Collect the bugs from the owner's human sessions first; they take priority.
+- More human co-op evenings over a virtual LAN; bugs from them take priority.
 - Summoned creatures: send their end reliably, and make `stageCreatureLife` fail on a
   frozen copy.
 - Arrows: a test shooter that reaches its target, then three green `stageP2hit` runs in a
@@ -300,4 +320,4 @@ read from code and archived logs, not reproduced at runtime.
 - Check whether `ContinueRoutine` and the other wrapped scripts have direct native
   callers that the script-table wrappers miss; hooking them in place, as for `Shoot`,
   covers both.
-- Internet play, then a longer human playthrough, then a first release.
+- Internet play, then a longer human playthrough, then 1.0.
