@@ -507,22 +507,29 @@
   kind: mod
   status: alpha
   coop_scope:
+    players_visible: 'yes'
     story: 'yes'
-    enemies: partial
-    world_state: unknown
-    items: unknown
+    enemies: 'yes'
+    world_state: partial
+    items: partial
   players: '2'
-  networking: unknown
-  open_source: unknown
+  networking: direct-ip
+  open_source: 'no'
   last_activity: 2026-10
   qa: none
-  notes: Two-player co-op for the full campaign, v0.1 alpha. The Fontaine boss fight cannot be synchronised, and
-    users may see enemy desync and a Little Sister crash. Needs Steam BioShock Remastered and no other file mods.
-    Base game is 2007, remaster 2016.
+  notes: Two-player co-op for the full campaign, v0.1 alpha (Nexus upload 2026-10-09, author NykoVoidCrownStudios).
+    The author says the whole campaign has been played start to finish in co-op. The partner has a real in-world
+    character (a Splicer model) and a location marker. The host controls enemy state; both players fight the same
+    enemies and Big Daddies, with occasional desyncs. Doors, switches, hacking and quest items are shared; Little
+    Sister choices and ADAM are per player; elevators are individual, and Hephaestus, Olympus Heights and Proving
+    Grounds objectives are partly per player. The Fontaine boss fight is individual, cutscenes are not fully
+    supported, and the client can crash in Little Sister sequences. Connects by direct IP on UDP 27015 (LAN, port
+    forwarding or a virtual LAN such as Hamachi or Radmin). Both players need the same mod version, Steam BioShock
+    Remastered and no other file mods. Closed source, no repository. Base game is 2007, remaster 2016.
   sources:
   - https://www.nexusmods.com/bioshock/mods/178
   - https://www.keengamer.com/articles/news/new-game-mod-enables-a-bioshock-multiplayer-co-op-mode/
-  checked: '2026-10-16'
+  checked: '2026-10-25'
 - game: 'S.T.A.L.K.E.R.: Shadow of Chernobyl'
   year: 2007
   engine: X-Ray (xrMPE)
@@ -1174,14 +1181,16 @@
   networking: hosted-relay
   open_source: partial
   last_activity: 2026-03
-  qa: none
+  qa: community-reports
   notes: Final mod files, not buildable code, 39 stars, last push 2026-03. Needs the wiltOS Mod Launcher and Advanced
     SDK; a community master server proxies connections. Press says Ubisoft and Valve blessed a Community Edition,
-    and an early test build lacked player models, revive polish and cutscenes.
+    and an early test build lacked player models, revive polish and cutscenes. On Linux, A2-03.23 loads and reaches
+    the co-op menu under Proton Experimental (2026-10-23); see games/dark-messiah-of-might-and-magic.
   sources:
   - https://github.com/KingDavidW/DarkMessiah-Coop-Mod-Files
+  - https://github.com/KingDavidW/DarkMessiah-Coop-Mod-Files/issues/1
   - https://wccftech.com/dark-messiah-of-might-and-magic-rtx-remix-mod-gets-new-trailer-online-co-op-mod-now-available/amp/
-  checked: '2026-10-16'
+  checked: '2026-10-23'
 - game: Far Cry
   year: 2004
   engine: CryEngine 1
@@ -2029,9 +2038,9 @@
   - https://github.com/cranebeaker/coop-anything/issues/79
   - https://github.com/Whocares66-Dev/DAOLib
   kind: mod
-  status: prototype
+  status: alpha
   coop_scope:
-    players_visible: partial
+    players_visible: yes
     story: no
     enemies: partial
     world_state: no
@@ -2045,18 +2054,22 @@
     Work in progress on DAOLib, a GPLv3 SKSE-style native plugin framework with
     an address library for the GOG/EA/Steam builds of 1.05.13263.0. Verified in
     the game: a guest joins over the network by save transfer, two players
-    control two different party members in the same world with each game
-    mirroring the other's creature, and a host-resolved hostile's health and
-    death state reach the guest. No real combat arbitration (guest attacks are
-    not relayed), no effect, quest or area-transition sync, LAN only, and the
-    ini file is the only interface. Automated two-client tests and a 0.6.0
-    install package are in the project repo.
+    control two different party members in the same world mirroring each
+    other, the guest's attack orders are validated and resolved in the host's
+    game, a fallen player's party is revived after the fight, the guest rejoins
+    when the host loads another save, and a plugin-owned SWF HUD screen shows
+    the session event log (filters, creature names). Missing: animation, effect
+    and loot sync, area transitions, a host/join menu and an internet
+    transport; LAN only. Automated two-client tests (sync, join, two avatars,
+    combat, arbitration, death, rejoin, UI) and a 0.7.4 install package with an
+    install script are in the project repo.
   sources:
   - https://github.com/vmosenkov/dao-coop
   - https://github.com/vmosenkov/dao-coop/blob/main/docs/STATUS.md
+  - https://github.com/vmosenkov/dao-coop/blob/main/docs/UI.md
   - https://github.com/cranebeaker/coop-anything/issues/79
   - https://github.com/Whocares66-Dev/DAOLib
-  checked: '2026-10-20'
+  checked: '2026-10-23'
 - game: Psychonauts
   year: 2005
   engine: Despair Engine / Gamebryo
@@ -2328,6 +2341,62 @@
   - https://store.steampowered.com/app/704450/Neverwinter_Nights_Enhanced_Edition/
   - https://www.co-optimus.com/game/212/pc/neverwinter-nights.html
   checked: '2026-10-16'
+- game: 'Star Wars Jedi Knight II: Jedi Outcast'
+  year: 2002
+  engine: id Tech 3 (OpenJK)
+  project: jedi-outcast-coop
+  url: https://github.com/Benehiko/jedi-outcast-coop
+  other_urls: []
+  kind: fork
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: partial
+    enemies: 'yes'
+    world_state: partial
+    items: per-player
+  players: 2-4
+  networking: direct-ip
+  open_source: 'yes'
+  last_activity: 2026-07
+  qa: none
+  notes: GPL-2.0 single-player campaign co-op on OpenJK, shipped as patches 0001-0031 on a pinned OpenJK commit plus a
+    Go installer/launcher (Linux and Windows). The host runs the campaign; joiners run the game code as "dual-load"
+    remote clients over UDP or LAN discovery. Its README lists objectives/cutscene sync for joiners (Track F) as in
+    progress. Continued in masonan777/Jedi-Outcast-Coop; write-up in games/jedi-outcast.
+  sources:
+  - https://github.com/Benehiko/jedi-outcast-coop
+  checked: '2026-10-25'
+- game: 'Star Wars Jedi Knight II: Jedi Outcast'
+  year: 2002
+  engine: id Tech 3 (OpenJK)
+  project: Jedi-Outcast-Coop (fork of jedi-outcast-coop)
+  url: https://github.com/masonan777/Jedi-Outcast-Coop
+  other_urls:
+  - https://github.com/Benehiko/jedi-outcast-coop
+  kind: fork
+  status: partial
+  coop_scope:
+    players_visible: 'yes'
+    story: partial
+    enemies: 'yes'
+    world_state: partial
+    items: per-player
+  players: 2-4
+  networking: direct-ip
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: automated
+  notes: Continues Benehiko's mod with one cumulative patch (0032). Level scripts, enemies, Force powers and the
+    lightsaber now work for joiners, plus a revive system, in-game CO-OP menus, same-PC split screen with two
+    controllers (second window started by the game), LAN and direct IP. A level-crawl bot loaded all 26 campaign
+    maps with a joiner in one run (RESULT PASS 26/26). Tested with 2 players on one PC; two PCs and 3-4 players
+    untested. GPL-2.0. Write-up in games/jedi-outcast.
+  sources:
+  - https://github.com/masonan777/Jedi-Outcast-Coop
+  - https://github.com/masonan777/Jedi-Outcast-Coop/blob/main/docs/fork-changes.md
+  checked: '2026-10-25'
+  made_with_coop_anything: true
 - game: 'Star Wars Jedi Knight: Jedi Academy'
   year: 2003
   engine: id Tech 3 (OpenJK)
@@ -2349,7 +2418,8 @@
   qa: none
   notes: GPL-2.0 single-player campaign co-op on OpenJK, 2 to 16 players per current listings (the GitHub readme
     header still says 2 to 4). Each player keeps their own character and force powers; releases on GitHub, Nexus
-    and JKHub. The main repo koevetmc/JACoop returned not found. No Jedi Outcast co-op was found.
+    and JKHub. The main repo koevetmc/JACoop returned not found. Jedi Outcast co-op on OpenJK with the same
+    dual-load design exists (jedi-outcast-coop, see that game).
   sources:
   - https://github.com/Parricidium/JACoop
   - https://github.com/koevetmc/JACoop
@@ -2818,13 +2888,15 @@
   players: unknown
   networking: dedicated-server
   open_source: true
-  last_activity: unknown
+  last_activity: 2024-12
   qa: none
   notes: Syncs player appearance, equipment, movement, basic animations and vehicles with passengers; not a campaign
-    co-op. Not to be confused with the separate closed CyberMP project.
+    co-op. Not to be confused with the separate closed CyberMP project. Last push 2024-12-21 (verified via GitHub
+    API), stalled at the patch 2.2 era; lives on through NightCityMP (2.31a continuation) and the oxylol story fork.
   sources:
+  - https://api.github.com/repos/tiltedphoques/CyberpunkMP
   - https://github.com/tiltedphoques/CyberpunkMP/blob/main/README.md
-  checked: 2026-10-16
+  checked: 2026-10-25
 - game: Cyberpunk 2077
   year: 2020
   engine: REDengine 4
@@ -2845,11 +2917,12 @@
   last_activity: 2026-06
   qa: none
   notes: GTA Online style sandbox with player-run servers, not a campaign co-op. June 2026 reports say no public
-    download yet and a semi-open phase is being prepared; server package may be open sourced later.
+    download yet and a semi-open phase is being prepared; server package may be open sourced later. Site
+    (cyber.mp) still live, checked 2026-10-23. Distinct from the story-co-op project NightCoop (beta 2026-10-23).
   sources:
   - https://www.pcgamesn.com/cyberpunk-2077/multiplayer-cybermp-mod
   - https://www.dsogaming.com/videotrailer-news/the-cyberpunk-2077-multiplayer-mod-is-still-alive/
-  checked: 2026-10-16
+  checked: 2026-10-25
 - game: Cyberpunk 2077
   year: 2020
   engine: REDengine 4
@@ -2866,13 +2939,15 @@
   players: unknown
   networking: unknown
   open_source: true
-  last_activity: unknown
+  last_activity: 2026-10
   qa: none
   notes: Adds a shared-story layer where one player is story host and others' worlds follow theirs, each from their
-    own save. Targets game patch 2.31 and needs RED4ext, redscript, Codeware, ArchiveXL, TweakXL.
+    own save. Targets game patch 2.31 and needs RED4ext, redscript, Codeware, ArchiveXL, TweakXL. Host pushes game
+    time, weather and tracked quest every 2 s; guest clocks only move forward. Last push 2026-10-10 (GitHub API).
   sources:
+  - https://api.github.com/repos/oxylol/cp2077-coop
   - https://github.com/oxylol/cp2077-coop
-  checked: 2026-10-16
+  checked: 2026-10-25
 - game: Cyberpunk 2077
   year: 2020
   engine: REDengine 4
@@ -2889,15 +2964,187 @@
   players: '2'
   networking: hosted-relay
   open_source: true
-  last_activity: unknown
+  last_activity: 2026-10
   qa: automated
   notes: Two-player co-op for game 2.31a via CET, redscript and RED4ext, with the partner shown as a stand-in NPC.
     The repo has test bench tooling and headless tests, so qa is automated only for those smoke tests, not a real
-    playthrough.
+    playthrough. Downloadable v0.0.37/alpha.5 ZIP (CET host/join panel, Python relay on UDP 11778). Source now
+    integrates Bukczyk's typed session foundation for player groups. Last push 2026-10-20 (GitHub API).
   sources:
+  - https://api.github.com/repos/KyleBuildsAI/cp2077-coop
   - https://github.com/KyleBuildsAI/cp2077-coop
   - https://github.com/KyleBuildsAI/cp2077-coop/pull/3
-  checked: 2026-10-16
+  checked: 2026-10-25
+- game: Cyberpunk 2077
+  year: 2020
+  engine: REDengine 4
+  project: NightCoop
+  url: https://nightcoop.net/
+  other_urls: []
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: yes
+    story: partial
+    enemies: yes
+    world_state: partial
+    items: per-player
+  players: up to 8
+  networking: hosted-relay
+  open_source: false
+  last_activity: 2026-10
+  qa: none
+  notes: Story co-op, closed source and free. Open beta started 2026-10-23 covering the prologue and Act 1. The
+    campaign runs in the host's world, each player as their own V (own appearance, level, gear, cyberware, own
+    purchases and ripperdoc visits). Dialogue by majority vote, synced cutscenes and combat, shared vehicles,
+    optional host-toggled PvP with level-normalized damage and revives. Native RED4ext plugin, game patch 2.31,
+    Windows; UDP direct or via the team's relay hub behind NAT. Capability claims are the project's own until
+    community reports land.
+  sources:
+  - https://nightcoop.net/
+  - https://www.polygon.com/cyberpunk-2077-co-op-mod-nightcoop
+  - https://www.gamingbible.com/news/platform/pc/cyberpunk-2077-co-op-multiplayer-mod-nightcoop-184269-20261020
+  checked: 2026-10-25
+- game: Cyberpunk 2077
+  year: 2020
+  engine: REDengine 4
+  project: NightCityMP
+  url: https://github.com/blyatiful1/NightCityMP
+  other_urls: []
+  kind: fork
+  status: alpha
+  coop_scope:
+    players_visible: yes
+    story: no
+    enemies: no
+    world_state: no
+    items: unknown
+  players: unknown
+  networking: direct-ip
+  open_source: true
+  last_activity: 2026-07
+  qa: none
+  notes: Continuation of CyberpunkMP ported to game patch 2.31a, Minecraft-style host & join. Syncs appearance,
+    clothes and drawn weapon, movement with animations, nameplates and chat, server-authoritative time of day,
+    emotes and upstream's demo jobs. NPCs, traffic, world state, quests and combat damage are not synced yet.
+    Distribution limited to GitHub and the project's own site per upstream license. Last push 2026-07-20.
+  sources:
+  - https://api.github.com/repos/blyatiful1/NightCityMP
+  - https://github.com/blyatiful1/NightCityMP
+  checked: 2026-10-25
+- game: Cyberpunk 2077
+  year: 2020
+  engine: REDengine 4
+  project: Bukczyk/CP2077-Coop (session foundation)
+  url: https://github.com/Bukczyk/CP2077-Coop
+  other_urls: []
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: yes
+    story: no
+    enemies: partial
+    world_state: no
+    items: unknown
+  players: '2'
+  networking: lan
+  open_source: true
+  last_activity: 2026-10
+  qa: none
+  notes: Experimental typed session foundation (SessionServer, CoopPlugin, runtime/session); collaboration upstream
+    of KyleBuildsAI/cp2077-coop. A one-PC/two-client diagnostic reached JOINER-fires-at-HOST validation with
+    health loss and death presentation at commit 481609a; reconnect death recovery still fails. Not a public
+    release. Last push 2026-10-20 (GitHub API).
+  sources:
+  - https://api.github.com/repos/Bukczyk/CP2077-Coop
+  - https://github.com/Bukczyk/CP2077-Coop
+  checked: 2026-10-25
+- game: Cyberpunk 2077
+  year: 2020
+  engine: REDengine 4
+  project: RedSync
+  url: https://github.com/nobody71004/RedSync
+  other_urls: []
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: yes
+    story: partial
+    enemies: partial
+    world_state: unknown
+    items: unknown
+  players: unknown
+  networking: dedicated-server
+  open_source: true
+  last_activity: 2026-08
+  qa: none
+  notes: AGPL-3.0. RED4ext C++ client + redscript layer + .NET 9 server over Valve GameNetworkingSockets.
+    Remote players appear as Codeware/AMM puppets. Deepest public quest sync found, host-authoritative quest-fact
+    relay with a whitelist (Phantom Liberty q301-q307 plus base-game prefixes), late-join fact snapshots; journal,
+    mission NPC AI and dialogue relay still open. CERBERUS scripted bot events (8-50 bots). README download links
+    still point at a placeholder domain, so no public player download found. Last push 2026-08-25 (GitHub API).
+  sources:
+  - https://api.github.com/repos/nobody71004/RedSync
+  - https://github.com/nobody71004/RedSync
+  checked: 2026-10-25
+- game: Cyberpunk 2077
+  year: 2020
+  engine: REDengine 4
+  project: OPEN//77
+  url: https://open2077.net/
+  other_urls:
+  - https://github.com/Open2077
+  kind: framework
+  status: alpha
+  coop_scope:
+    players_visible: yes
+    story: no
+    enemies: yes
+    world_state: partial
+    items: unknown
+  players: unknown
+  networking: dedicated-server
+  open_source: partial
+  last_activity: 2026-10
+  qa: none
+  notes: Dedicated-server multiplayer platform (alpha access), not story co-op. Native client module + custom
+    replication protocol; per the 2026-08-25 devblog, movement, animation, emotes, combat (with synced audio),
+    PvP, full vehicle replication, time of day, weather and world destruction replicate; crowd population is
+    sanitized out so the server owns the world. Accounts, launcher, server browser, Lua-scriptable resources,
+    Windows/Linux servers. Org repos (app, resources, devkit) public; client module source status not confirmed.
+    Org repos last pushed 2026-10-22.
+  sources:
+  - https://api.github.com/repos/Open2077/open77-app
+  - https://open2077.net/devblog/2026-08-25-state-of-the-net
+  - https://open2077.net/
+  - https://github.com/Open2077/open77-app
+  checked: 2026-10-25
+- game: Cyberpunk 2077
+  year: 2020
+  engine: REDengine 4
+  project: Chaoskjell/Coop-Cyberpunk-Mod
+  url: https://github.com/Chaoskjell/Coop-Cyberpunk-Mod
+  other_urls: []
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: unknown
+    story: no
+    enemies: no
+    world_state: no
+    items: unknown
+  players: '2'
+  networking: unknown
+  open_source: true
+  last_activity: 2026-08
+  qa: none
+  notes: MIT. v0 scaffold, 8 commits on one day (2026-08-09). CET Lua mods exchange plain files with a Python
+    bridge process that forwards over TCP to a relay; setup GUI for non-technical users. No gameplay sync claims
+    verified. Last push 2026-08-09 (GitHub API).
+  sources:
+  - https://api.github.com/repos/Chaoskjell/Coop-Cyberpunk-Mod
+  - https://github.com/Chaoskjell/Coop-Cyberpunk-Mod
+  checked: 2026-10-25
 - game: Elden Ring
   year: 2022
   engine: FromSoftware proprietary
@@ -4013,6 +4260,93 @@
   - https://bloody-disgusting.com/video-games/3957869/fan-made-co-op-mod-for-alien-isolation-announced/
   - https://steamcommunity.com/app/214490/discussions/0/598198356181958694/
   checked: 2026-10-16
+- game: Outlast
+  year: 2013
+  engine: Unreal Engine 3
+  project: OpenOL (multiplayer beta, with OpenOL-Relay)
+  url: https://github.com/ShyKiss/OpenOL
+  other_urls:
+  - https://github.com/ShyKiss/OpenOL-Relay
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: partial
+    enemies: partial
+    world_state: partial
+    items: unknown
+  players: unknown
+  networking: hosted-relay
+  open_source: partial
+  last_activity: 2026-08
+  qa: automated
+  notes: Rebuilt OLGame.exe plus packages dropped over a licensed Steam install (needs the Whistleblower DLC), multiplayer
+    beta since 2.0.1, release 2.1.0 (2026-08-29). Source is public but no license is stated. Joining works through
+    the standalone OpenOL-Relay 2.1.0 (room PUBLIC); the relay source embedded in the OpenOL repo uses the old packet
+    format. Two-client tests show players, doors, player-spawned enemies (attacks, death, respawn) and story triggers
+    synced; checkpoint loads are not synced, triggers fire for everyone wherever they are, and map enemies are
+    duplicated (every client runs its own copy). Open upstream issues report that connect and Start Server do nothing.
+    A scripted suite (two real clients plus protocol tests, 67 pass, 4 known-bug expectations) and three small relay patches (out-of-context triggers, enemy packet ids, late-join snapshots) is in the own fork https://github.com/G3RKA/OpenOL (tools/outlast-coop); details in games/outlast.
+  sources:
+  - https://github.com/ShyKiss/OpenOL
+  - https://github.com/ShyKiss/OpenOL-Relay
+  - https://github.com/ShyKiss/OpenOL/issues/7
+  - https://github.com/ShyKiss/OpenOL/issues/8
+  checked: 2026-10-21
+- game: Outlast
+  year: 2013
+  engine: Unreal Engine 3
+  project: OpenOL fork with a native enemy patch, play kit and tests (own development)
+  url: https://github.com/G3RKA/OpenOL
+  other_urls: []
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: partial
+    enemies: 'yes'
+    world_state: partial
+    items: unknown
+  players: unknown
+  networking: hosted-relay
+  open_source: partial
+  last_activity: 2026-10
+  qa: automated
+  notes: A fork of OpenOL with its own work in tools/outlast-coop (the upstream has no license, the folder is MIT). A native patch
+    of OpenOL 2.1.0's OLGame.exe keeps one real copy of every map enemy (the lower player id wins) instead of two,
+    the same rule is written in EnemyChannel.cpp (not compiled), plus host and join scripts, three relay patches as files and an
+    automated suite with real clients (67 pass, 4 known-bug expectations; menu path, New Game and rejoin 6 of 6). Tested on one PC
+    with two copies of the game; two PCs, the internet and three players are untested. Checkpoint loads are still not shared and
+    story triggers still fire for everyone wherever they are.
+  sources:
+  - https://github.com/G3RKA/OpenOL
+  - https://github.com/ShyKiss/OpenOL
+  checked: 2026-10-22
+- game: Outlast
+  year: 2013
+  engine: Unreal Engine 3
+  project: Outlast-Together
+  url: https://github.com/LucianLandIsBack/Outlast-Together
+  other_urls: []
+  kind: mod
+  status: abandoned
+  coop_scope:
+    players_visible: unknown
+    story: unknown
+    enemies: unknown
+    world_state: unknown
+    items: unknown
+  players: unknown
+  networking: unknown
+  open_source: 'yes'
+  last_activity: 2025-02
+  qa: none
+  notes: MIT-licensed school project with a networking DLL and a client folder, no releases. The README says there will be
+    no updates after the school release unless the author feels like it, and the last commits scrap the DLL hook.
+    What it synced was not checked.
+  sources:
+  - https://github.com/LucianLandIsBack/Outlast-Together
+  checked: 2026-10-21
 - game: 'Kingdom Come: Deliverance'
   year: 2018
   engine: CryEngine
@@ -6907,29 +7241,36 @@
   engine: IW 4.0 (Call of Duty)
   project: mw2_coop
   url: https://github.com/stxlvn/mw2_coop
-  other_urls: []
+  other_urls:
+  - https://github.com/stxlvn/mw2_coop/releases
+  - https://www.nexusmods.com/codmw2/mods/99
   kind: mod
-  status: prototype
+  status: partial
   coop_scope:
     players_visible: yes
     story: partial
-    enemies: unknown
-    world_state: unknown
-    items: synced weapons
+    enemies: yes
+    world_state: yes
+    items: per-player
   players: 2
   networking: direct-ip
   open_source: 'yes'
   last_activity: 2026-10
   qa: automated
-  notes: Work in progress. MIT prototype for the 64-bit Steam build. A winmm.dll proxy plus load-time
-    GSC patches on top of the game's own lockstep Spec Ops co-op netcode. Two copies play S.S.D.D.
-    together (checkpoints, restart when both are down, saved progress), move on to the next mission
-    together and share the Team Player convoy Humvee (turret for whoever boards first, seat swap) and
-    the Wolverines! Humvee rides; in-game QA passes on both machines. Other missions not done; not
-    playable through yet. Write-up in games/modern-warfare-2.
+  notes: Beta (v0.5.0-beta), playable. MIT mod for the 64-bit Steam build. A winmm.dll proxy plus load-time
+    GSC patches on top of the game's own lockstep Spec Ops co-op netcode, hosted and joined from the
+    game's menus (lobby, LAN list, address, Steam invite). Every set piece is reworked for two players, among them S.S.D.D.,
+    Team Player, Wolverines!, the rope and rappel scenes (Gulag, Just Like Old Times, Escape from Favela), Takedown's car, The Only Easy Day's swim, Cliffhanger's climb and
+    snowmobiles, No Russian, Second Sun's crash and ISS, Loose Ends' betrayal, Endgame's boat and knife
+    fight; enemies fight both players, both play the difficulty the host picks, friendly fire is a lobby switch and every level has checkpoints. The game's co-op runs in lockstep (both PCs run the same level), so the world
+    is shared. In-game QA on two copies, including a bot tour of the start points of all 19 levels (the Museum epilogue still fails for player 2); two people played parts of the story on two PCs, from the start up to and including No Russian. The missions after it were checked by bots only; not played through end to end yet. Write-up in
+    games/modern-warfare-2.
   sources:
   - https://github.com/stxlvn/mw2_coop
-  checked: '2026-10-20'
+  - https://github.com/stxlvn/mw2_coop/releases
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/modern-warfare-2
+  checked: '2026-10-25'
+  made_with_coop_anything: true
 - game: Celeste
   year: 2018
   engine: XNA/FNA
@@ -7184,27 +7525,6 @@
   - https://www.pcgamingwiki.com/wiki/Spider-Man%3A_Friend_or_Foe
   checked: '2026-10-20'
   made_with_coop_anything: true
-- game: 'Deep Rock Galactic: Survivor'
-  year: 2024
-  engine: Unity 6 (IL2CPP)
-  project: drg-survivor-coop
-  url: https://github.com/Reudo/drg-survivor-coop
-  other_urls: []
-  kind: mod
-  status: abandoned
-  coop_scope:
-    players_visible: partial
-  players: '2'
-  networking: direct-ip
-  open_source: 'yes (MIT)'
-  last_activity: 2026-10
-  qa: automated
-  notes: Host-authoritative BepInEx/LiteNetLib prototype, direct IP only. The automated runs use two
-    clients on ONE PC; the first real two-PC test went badly, so treat it as experimental. Details in
-    games/deep-rock-galactic-survivor/. The author archived it (2026-10) in favour of the local co-op plugin below.
-  sources:
-  - https://github.com/Reudo/drg-survivor-coop
-  checked: '2026-10-24'
 - game: 'Deep Rock Galactic: Survivor'
   year: 2024
   engine: Unity 6 (IL2CPP)
@@ -7759,6 +8079,90 @@
   - 'GitHub repository search via the API: the witness multiplayer, witness coop, the witness randomizer, TheWitnessExplorer, witness64_d3d11 (no co-op project), 2026-10-22'
   - 'WebSearch (extended): The Witness Jonathan Blow multiplayer co-op mod; also randomizer / Archipelago client and engine queries (no co-op mod), 2026-10-22'
   - 'Not checked: Nexus Mods, ModDB, Reddit, archive.org, Steam guides in depth, the game or speedrun Discords, non-English communities'
+- game: Call of Duty
+  year: 2003
+  engine: IW 1.0 (Call of Duty, id Tech 3 derived)
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope: {}
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: No campaign co-op mod found. A 2025 Steam reply names a "CoD 1 Cooperative Mod" with no link or author;
+    no build was found. The ModDB "Call of Duty 1 Splitscreen PC v1.1" file is a 318-byte multiplayer splitscreen
+    launcher, not campaign co-op. Research and reverse-engineering notes for the 1.5 singleplayer exe (4 server client
+    slots kept, network transport stripped to loopback) and a per-mission script survey are in games/call-of-duty.
+    The native networking part is open for someone to take on.
+  sources:
+  - https://steamcommunity.com/discussions/forum/0/2284960483102477437/
+  - https://www.moddb.com/downloads/call-of-duty-1-splitscreen-pc-v11
+  checked: '2026-10-24'
+  searched:
+  - 'Repo DIRECTORY.md, games/, issues and PRs for "call of duty" (only MW 2019, MW2, MW3 claims), 2026-10-23'
+  - 'WebSearch: Call of Duty 2003 / CoD1 / United Offensive co-op campaign mod, "CoD 1 Cooperative Mod", Russian
+    query, vcodmods/xtnded co-op, 2026-10-23'
+  - 'GitHub repository search via gh: iw1x, codextended, call of duty 1, coduo, cod1 coop, cod coop singleplayer,
+    codsp (multiplayer extensions only), 2026-10-23'
+  - 'Not checked: Discord servers, Reddit, archive.org, Nexus Mods'
+- game: 'Call of Duty: United Offensive'
+  year: 2004
+  engine: IW 1.0 (Call of Duty, id Tech 3 derived)
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope: {}
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: No campaign co-op mod found. CoDUO-YAP (GPL-3.0, active 2026-10) is a singleplayer and multiplayer
+    quality-of-life plugin with a loader and hooks for the UO exe, a possible base. Open CoD:UO (opencoduo/coduomp)
+    reconstructs the multiplayer client and server source but states no license and has no singleplayer AI code.
+    See games/call-of-duty (UO 1.51 not analysed per mission yet).
+  sources:
+  - https://github.com/Clippy95/CoDUO-YAP
+  - https://github.com/opencoduo/coduomp
+  checked: '2026-10-24'
+  searched:
+  - 'Same searches as the Call of Duty (2003) entry, 2026-10-23'
+- game: Obscure
+  year: 2004
+  engine: Hydravision in-house (.hvp archives, .hoe scripts); not RenderWare
+  project: obscure-coop
+  url: https://github.com/Gyurooo/obscure-coop
+  other_urls: []
+  kind: mod
+  status: playable
+  coop_scope:
+    players_visible: 'yes'
+    story: 'yes'
+    enemies: 'yes'
+    world_state: partial
+    items: per-player
+  players: '2'
+  networking: steam-relay
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: automated
+  notes: Online co-op over Steam for the Steam version (build 215286), built on the game's own 2-player local co-op. A proxy xinput1_3.dll makes the friend's controller
+    the host's player 2 and mirrors the host's game to the friend's copy (characters, enemies, items, doors, story flags, levels, weapons, inventory, deaths,
+    save loading), with smoothing over the internet. Optional in-game supersampling, 16x filtering, a tuned ReShade setup and 16:9 widescreen. Ladders, racks and locks
+    do not animate on the friend's screen. Bot tests drive two real copies on one PC (load, death, doors, items, combat) but only ran on builds up to 1.0;
+    builds 1.1 to 1.8 (smoothing, graphics, widescreen) were not bot-tested, only checked by screenshots, measurements and playtests over Steam. MIT.
+    Write-up in games/obscure.
+  sources:
+  - https://github.com/Gyurooo/obscure-coop
+  - https://github.com/cranebeaker/coop-anything/issues/183
+  - https://store.steampowered.com/app/254460/
+  checked: '2026-10-25'
 - game: Vanquish
   year: 2010
   engine: Platinum Engine (in-house, Havok physics)
@@ -7953,6 +8357,92 @@
   - https://github.com/Blizzard/s2client-proto/blob/master/docs/protocol.md
   checked: '2026-10-23'
   made_with_coop_anything: true
+- game: Teenage Mutant Ninja Turtles (TMNT)
+  year: 2007
+  engine: Ubisoft Jade
+  project: TMNT local co-op (DLL injection)
+  url: https://github.com/cranebeaker/coop-anything/tree/main/games/tmnt-2007
+  other_urls: []
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: 'yes'
+    story: partial
+    enemies: partial
+    world_state: unknown
+    items: unknown
+  players: '2'
+  networking: unknown
+  open_source: 'no'
+  last_activity: 2026-10
+  qa: none
+  notes: Local couch co-op on one PC for the PC game (TMNTGame.exe 1.0.0.188), two controllers, one shared midpoint camera,
+    one game process. Work in progress, not stable. An injected DLL spawns a second turtle with the game's own spawn function and splits input around
+    its update; enemies target it, it has a health bar and respawns. Player 2 lacks history-based moves (double jump,
+    combos, dodge) and team moves are off while it is present. Level loads untested. Not released; no structured testing yet.
+  sources:
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/tmnt-2007
+  - https://en.wikipedia.org/wiki/TMNT_(video_game)
+  - https://github.com/xan1242/UbiTMNTHax
+  - https://github.com/hogsy/jaded
+  checked: '2026-10-25'
+  made_with_coop_anything: false
+- game: Tony Hawk's Underground 2
+  year: 2004
+  engine: Neversoft engine
+  project: thug2-coop
+  url: https://github.com/LeftGamer1/thug2-coop
+  other_urls: []
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: 'yes'
+    enemies: 'no'
+    world_state: 'yes'
+    items: per-player
+  players: '2'
+  networking: direct-ip
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: community-reports
+  notes: Story Mode for two online on top of THEMOD 1.3 (a dinput8.dll proxy plus one QB script). The friend joins
+    the host's story; cutscenes, goal cameras, won goals, guest swaps and the pro teammate are synced, and shared
+    goals are won once both finish them. Skater stats stay per player. Ships a byte patcher that rebuilds THEMOD
+    1.3's exe from the player's own THUG2.exe, since THEMOD can no longer be downloaded. The tester and a friend
+    play it online; a scripted two-client walkthrough checks for crashes only. MIT. Write-up in
+    games/tony-hawks-underground-2.
+  sources:
+  - https://github.com/LeftGamer1/thug2-coop
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/tony-hawks-underground-2
+  checked: '2026-10-26'
+  made_with_coop_anything: true
+- game: Gedonia
+  year: 2022
+  engine: Unity 2019.4 (Mono)
+  project: Gedonia Co-op
+  url: https://github.com/Zerbith/gedonia-coop
+  other_urls:
+  - https://github.com/Zerbith/gedonia-coop/releases/tag/v0.7.1
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: yes
+    story: yes
+    enemies: yes
+    world_state: yes
+    items: per-player
+  players: '2-4'
+  networking: steam-relay
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: automated
+  notes: 'BepInEx 5 / HarmonyX plugin for the original Gedonia (Steam app 1114220, build 16727998; not Gedonia 2), built from zero. Steam P2P through the game''s own Steamworks.NET (friends-only lobby of 4, in-game invites) or plain UDP in the home network (LAN discovery). Host-authoritative: enemies, followers and world events have one tester with epochs; story calls (dialogue answers, triggers) run on every machine in the host''s order; shared conversations with voting; shared combat XP; spell effects and transformations shown to others; cutscenes start when every player confirms; chests, gathering spots, expeditions with seeded generated dungeons, travellers, time and weather, sounds; respawn crystals replace the reload-only death screen. QA: two game clients on one PC driven by test steps and bots (scripts/test-local.ps1, 35 scenarios, logged assertions and screenshots); real sessions of the tester with friends over Steam went fine, their findings fixed in 0.7. Each player keeps their own save. Write-up in games/gedonia/. MIT licence.'
+  sources:
+  - https://github.com/Zerbith/gedonia-coop
+  - https://github.com/cranebeaker/coop-anything/issues/214
+  checked: '2026-10-26'
+  made_with_coop_anything: true
 - game: Baldi's Basics Plus
   year: 2020
   engine: Unity 2020.3.49f1 (Mono)
@@ -7964,14 +8454,14 @@
   kind: mod
   status: alpha
   coop_scope:
-    players_visible: yes
+    players_visible: 'yes'
     story: partial
-    enemies: yes
+    enemies: 'yes'
     world_state: partial
     items: per-player
-  players: 2-4
+  players: '2-4'
   networking: steam-relay
-  open_source: yes
+  open_source: 'yes'
   last_activity: 2026-10
   qa: automated
   notes: Host-authoritative co-op for game version 0.14.5 Hide & Seek runs (BepInEx 5 and MelonLoader builds that

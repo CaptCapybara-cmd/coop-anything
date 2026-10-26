@@ -40,6 +40,7 @@ programming. Check for one first.
 | KeeperFX (Dungeon Keeper) | Archon mode, shared keeper co-op | Lockstep; checksums make a perfect test oracle. |
 | Arx Libertatis (Arx Fatalis) | two co-op forks | GPL rewrite. |
 | fallout1-ce / fallout2-ce | Fallout 1 and 2 co-op projects | Turn-based combat sync is the hard part. |
+| OpenJK (Jedi Outcast) | jedi-outcast-coop and its fork, [games/jedi-outcast](../games/jedi-outcast/README.md) | Same dual-load design as JACoop: joiners run the game code against placeholder entities filled from snapshots, so anything only the host's game code writes must be networked. Single-player "player = entity 0" checks and `kyle` script names are the main source of joiner bugs. |
 | OpenJK (Jedi Academy) | JACoop | |
 | DevilutionX (Diablo) | built-in multiplayer | |
 | reone (KOTOR) | multiplayer demo | Engine still early. |
