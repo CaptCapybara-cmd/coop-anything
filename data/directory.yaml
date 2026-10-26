@@ -8443,3 +8443,40 @@
   - https://github.com/cranebeaker/coop-anything/issues/214
   checked: '2026-10-26'
   made_with_coop_anything: true
+- game: "Spooky's Jump Scare Mansion: HD Renovation"
+  year: 2017
+  engine: Unity 2021.3 (Mono)
+  project: Spooky Together
+  url: https://github.com/multiplayereverything/spooky-together
+  other_urls:
+  - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.9
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/spooky-jump-scare-mansion
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: 'yes'
+    enemies: 'yes'
+    world_state: partial
+    items: shared
+  players: '2-4'
+  networking: steam-relay
+  open_source: partial
+  last_activity: 2026-10
+  qa: automated
+  notes: BepInEx 5 and MelonLoader 0.7 builds that play together, for the Steam build. The host picks every room
+    (seeded room randomness) and runs every specimen; a transpiler retargets each specimen at the nearest standing
+    player, including specimens that keep the player in a variable. One shared copy of the run's keys and inventory
+    with a 10 s checksum repair; pickups, unlocks and weapons (the axe) shared, hits relayed to every copy, specimen
+    and Taker damage decided on the host. Endings take the whole team; downed players spectate and revive at the
+    next room. Covers the base mansion, Endless, the hospital and the Dollhouse. Taker boss attacks, health, stamina
+    and some puzzle props are per player or refresh on re-entry; no host migration. Steam P2P through the game's own
+    Steamworks (lobbies, invites, Valve relay) or LAN/direct TCP 27020. v0.2.9 pre-release. The lab suite runs up to
+    four hidden game copies (mixed loaders) through scripted tours with error, heap, desync and frame-cost checks,
+    plus a mutation check per fix; Steam was tested with one account only. Source is public with no licence file yet.
+  sources:
+  - https://github.com/multiplayereverything/spooky-together
+  - https://github.com/multiplayereverything/spooky-together/blob/main/MODLOG.md
+  - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.9
+  checked: '2026-10-26'
+  made_with_coop_anything: true
