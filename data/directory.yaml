@@ -7953,3 +7953,38 @@
   - https://github.com/Blizzard/s2client-proto/blob/master/docs/protocol.md
   checked: '2026-10-23'
   made_with_coop_anything: true
+- game: Baldi's Basics Plus
+  year: 2020
+  engine: Unity 2020.3.49f1 (Mono)
+  project: Baldi Together
+  url: https://github.com/multiplayereverything/baldi-plus-coop
+  other_urls:
+  - https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.0
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/baldis-basics-plus
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: yes
+    story: partial
+    enemies: yes
+    world_state: partial
+    items: per-player
+  players: 2-4
+  networking: steam-relay
+  open_source: yes
+  last_activity: 2026-10
+  qa: automated
+  notes: Host-authoritative co-op for game version 0.14.5 Hide & Seek runs (BepInEx 5 and MelonLoader builds that
+    play together). Syncs players (directional sprites, names, pings), every named NPC and its abilities, doors,
+    windows, notebooks, free pickups, teammates' item effects, Johnny's shop with a shared YTP wallet, elevator
+    results, individual capture with teammate spectating, and LAN host migration. LAN over TCP, or online through
+    the game's own Steamworks.NET (Steam lobbies, invites, Valve relay; no host migration there). Challenges,
+    endless, field trips and random events are not validated. MIT. v0.9.0 pre-release. The lab suite drives two
+    and three real game processes (tours plus two-process LAN, NPC, soak and chaos-proxy link tests); the Steam
+    transport ran on Steam's in-process socket pair under one account, and no two-account Steam session has run yet.
+  sources:
+  - https://github.com/multiplayereverything/baldi-plus-coop
+  - https://github.com/multiplayereverything/baldi-plus-coop/blob/main/docs/ONLINE-0.9.0.md
+  - https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.0
+  checked: '2026-10-26'
+  made_with_coop_anything: true
