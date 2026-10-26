@@ -10,7 +10,7 @@
 
 ## Where things stand
 
-Spooky Together lets 2 to 4 players run the mansion together: the base mansion, Endless, the hospital and the Dollhouse. Everyone is in the same room and is chased by the same specimens, and the team shares keys, items and the axe. Endings take the whole team. A lethal hit downs a player instead of ending the run while a teammate is still standing. It is an alpha. Every fix is covered by scripted tests with up to four hidden game copies. Steam has been tested with one account only, and nobody has written up a full playthrough yet.
+Spooky Together lets 2 to 4 players run the mansion together: the base mansion, Endless, the hospital and the Dollhouse. Everyone is in the same room and is chased by the same specimens, and the team shares keys, items and the axe. Endings take the whole team. A lethal hit downs a player instead of ending the run while a teammate is still standing. It is an alpha. The author has played it with friends in real sessions, and it worked very well. Every fix is also covered by scripted tests with up to four hidden game copies. Steam has been tested with one account only, and nobody has written up a full playthrough yet.
 
 ## Existing work
 
@@ -73,6 +73,7 @@ Each fix has a lab-only switch (`-st-mutate <name>`) that turns it off. `scripts
   - The mutation check: all 5 new switches were caught.
   - `test-transport.ps1`: 5/5.
 - **Earlier results:** 0.2.8 passed the quick suite 11/11 and its mutation checks 6/6. 0.2.2 passed the full suite 17/17, including a 10-minute 4-player soak.
+- **Real sessions:** the author has played it with friends, and it worked very well. No structured notes were kept, so it stays at `automated` rather than `verified-playthrough`.
 - The Steam path runs real Steam lobbies and Steam Networking Sockets between lab copies on one account, over 127.0.0.1.
 - Not covered:
   - specimens chasing a teammate in real play (the retarget check counts the rewritten reads);

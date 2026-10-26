@@ -8473,7 +8473,7 @@
     and some puzzle props are per player or refresh on re-entry; no host migration. Steam P2P through the game's own
     Steamworks (lobbies, invites, Valve relay) or LAN/direct TCP 27020. v0.2.9 pre-release. The lab suite runs up to
     four hidden game copies (mixed loaders) through scripted tours with error, heap, desync and frame-cost checks,
-    plus a mutation check per fix; Steam was tested with one account only. Source is public with no licence file yet.
+    plus a mutation check per fix; the author has also played it with friends and reports it works very well. Steam was tested with one account only. Source is public with no licence file yet.
   sources:
   - https://github.com/multiplayereverything/spooky-together
   - https://github.com/multiplayereverything/spooky-together/blob/main/MODLOG.md
