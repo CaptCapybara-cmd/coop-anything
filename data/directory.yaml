@@ -8471,7 +8471,7 @@
     the game's own Steamworks.NET (Steam lobbies, invites, Valve relay; no host migration there). Challenges,
     endless, field trips and random events are not validated. MIT. v0.9.0 pre-release. The lab suite drives two
     and three real game processes (tours plus two-process LAN, NPC, soak and chaos-proxy link tests); the Steam
-    transport ran on Steam's in-process socket pair under one account, and no two-account Steam session has run yet.
+    transport ran on Steam's in-process socket pair under one account, and no two-account Steam session has run yet. The author's own hands-on testing (not yet with friends) found it mostly works well.
   sources:
   - https://github.com/multiplayereverything/baldi-plus-coop
   - https://github.com/multiplayereverything/baldi-plus-coop/blob/main/docs/ONLINE-0.9.0.md

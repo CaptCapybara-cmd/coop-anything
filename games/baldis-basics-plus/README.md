@@ -10,7 +10,7 @@
 
 ## Where things stand
 
-Baldi Together lets up to four players run Hide & Seek floors together, over LAN or online through Steam. The host runs the real game; NPCs, doors, pickups, the shop and results follow the host. Each player can be caught on their own and then spectates teammates. It is an alpha. The main mode is covered by automated tests with real game processes. Challenges, endless, field trips and random events have not been validated.
+Baldi Together lets up to four players run Hide & Seek floors together, over LAN or online through Steam. The host runs the real game; NPCs, doors, pickups, the shop and results follow the host. Each player can be caught on their own and then spectates teammates. It is an alpha. The main mode is covered by automated tests with real game processes, and the author's own hands-on testing (mostly on their own, not yet with friends) found it works well for the most part. Challenges, endless, field trips and random events have not been validated.
 
 ## Existing work
 
@@ -88,6 +88,7 @@ What it cannot cover is Valve's relay between two accounts.
 - `run-tour.ps1 -Steam` (one process, Steam signed in): 16/16. Steam's socket pair under two real Transports (connect, both directions, a 64 KB frame, 200 frames in order, final frame before close, closing side ends its peer), the Steam pages, a real `bt=lab` lobby with Join Game presence, and leaving.
 - `scripts/lab-suite.ps1` on the 0.9.0 build: the transport checks and their mutant; feature tours (lobby 32, spectator 16, hide-and-seek audio 7, spectator UI 18, items 18, Beans 14, Arts and Crafters 16, Mrs. Pomp 17, The Test 15, Dr. Reflex 16, Chalkles 15, Hall Monitor 25, compat-fail 3); two-process tests (LAN 15/15, NPC sync 15/15, core co-op 14/14, soak 12/12, link 7/7). Every game launch uses `-bt-lab -bt-diagnostics` and test-owned processes only.
 - The two-process encounter test passed 45/45 on the final build after an intermittent failure in an earlier suite run. Some two-process launches stall at startup and are retried once.
+- **Hands-on:** the author has played it mostly on their own and reports it works well for the most part. It has not been played with friends yet.
 - Not covered yet: a Steam session between two accounts over Valve's relay.
 
 ## How to play
