@@ -307,3 +307,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   (dx, dz): θ = atan2(dx, dz) + π = atan2(-dx, -dz), all within ~0.15 rad.
 - Fix: write `[0, yaw, 0, 0]`; recompute the yaw goal only after 0.15 m of movement and ease toward
   it along the shorter arc.
+
+### Run 15 (2026-10-27 21:53): yaw fixed
+- Owner: the puppet now faces the way it moves. It does not walk: it slides/teleports. It is in the
+  reset (idle) pose; between native warps (every 500 ms) the game still pulls it back, so it jumps
+  on each warp.
+- Next: (a) quick check with a shorter warp interval now that its animation is reset (flicker in
+  run 9 may have come from fighting its run cycle); (b) real walking needs the puppet's own
+  locomotion driven by a movement input (ChrManipulator / ChrCtrl) or a native play-animation call —
+  not found yet.
