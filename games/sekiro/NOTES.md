@@ -512,3 +512,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   is none, log the low NpcParam ids and do not spawn. `SEKIRO_COOP_PUPPET_ANIM_PASSTHROUGH=1`:
   the puppet plays the remote action ids as they are (6-8 digit ids only).
 - Unknown: whether c0000 can be created as an enemy/NPC character at all (crash risk; test copy).
+
+### Run 31 (2026-10-28 02:48): c0000 spawn crashes the game
+- NpcParam rows for model 0: 0, 1, 10, 11, 12, 100, 540, 541, 542. Spawned c0000 with NpcParam 0 /
+  think 0; created and pinned after 49 ms; the game crashed ~0.3 s later.
+- Windows Application Error: sekiro.exe AV at RVA 0x9cbf09, in 0x9cbe40, an equipment-slot
+  accessor (asserts "slotIdx>=0", "slotIdx<EQUIP_SLOT_IDX_Num"); it read `[equip+slot*4+0x24]`
+  through a bad equipment pointer. Derived: the c0000 character has no equipment data with
+  NpcParam 0. Not in sekiro_coop.dll.
+- Run 32: same with NpcParam 540 (guess: a human-NPC row that may carry equipment).
