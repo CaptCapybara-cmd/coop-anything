@@ -298,3 +298,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Next (puppet v4): reset animation every 2 s (byte-checked call), yaw quaternion (0, sin, 0, cos)
   from the target's movement written to physics +0x70 and passed to the warp, eased target.
   Logs hero rotation and heading to calibrate the yaw convention.
+
+### Run 14 (2026-10-27 21:50): puppet v4 (animation reset, yaw, easing)
+- Animation reset ran every 2 s (29 resets, 0 refused by the byte check), no crash.
+- Owner: puppet faces "inverted" relative to the player, jitters when turning.
+- Log: the Hero's physics +0x70 reads `[0, θ, 0, 0]` with θ in radians (±π), not a quaternion; we
+  had written (0, sin, 0, cos). Calibration over 8 samples of the Hero's movement direction
+  (dx, dz): θ = atan2(dx, dz) + π = atan2(-dx, -dz), all within ~0.15 rad.
+- Fix: write `[0, yaw, 0, 0]`; recompute the yaw goal only after 0.15 m of movement and ease toward
+  it along the shorter arc.
