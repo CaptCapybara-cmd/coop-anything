@@ -275,3 +275,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Side note: the owner's event log also shows AVs in cargo.exe (21:11) and powershell.exe (20:55)
   in unknown modules, plus the earlier rustc AV during the first build. Not explained; worth
   keeping in mind if unrelated crashes appear.
+
+### Run 12 (2026-10-27 21:35): network-driven puppet, second try
+- Registry fix held (no crash). Puppet neutralised (no attacks) but "just runs straight": no
+  session, so no remote position; with no position write its last animation carried it away.
+- No session: the simulator's single Handshake went out 0.03 s before the DLL bound its socket
+  (os error 10054) and was lost; the simulator then received the DLL's handshake and declared the
+  session up, while the DLL kept timing out and re-sending. sekiro-coop's handshake sends once and
+  waits, so whichever side starts first can lose its packet.
+- Fixes: simulator answers every Handshake retry; puppet holds its last position without data.
