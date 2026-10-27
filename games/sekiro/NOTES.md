@@ -284,3 +284,17 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   session up, while the DLL kept timing out and re-sending. sekiro-coop's handshake sends once and
   waits, so whichever side starts first can lose its packet.
 - Fixes: simulator answers every Handshake retry; puppet holds its last position without data.
+
+### Run 13 (2026-10-27 21:43): network-driven puppet works
+- Launch via a .cmd script (a pasted command had been cut, launching vanilla without the profile or
+  the save override; the main save was written but no mod was loaded, so nothing modded touched it).
+- Session up (the simulator answered one handshake retry); remote_fresh=2383, remote_stale=0; ~2
+  warps/s. Owner: the puppet follows his path as intended, but jitters and does not turn.
+- The game moved it between our steps ~80% of the time (1820/2383): its own run animation's root
+  motion while logic is off.
+- Offline: `ChrCmd_ChrResetAnimation(false)` ends in `0x9f4c60(chr)` = reset of the animation module
+  `[ChrIns+0x1ff8]+0x28` via 0xb442c0 (the `true` variant 0x9f4c80 also sets
+  `[[ChrIns+0x50]+0x20]+0x1334 = 1`).
+- Next (puppet v4): reset animation every 2 s (byte-checked call), yaw quaternion (0, sin, 0, cos)
+  from the target's movement written to physics +0x70 and passed to the warp, eased target.
+  Logs hero rotation and heading to calibrate the yaw convention.
