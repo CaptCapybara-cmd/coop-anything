@@ -476,3 +476,13 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 ### Run 27 plan
 - Phased FPS test from the pin: A normal 0-40 s, B warps only 40-80 s, C no position writes
   80-120 s, D normal + fast catalog (187 ids, 0.4 s) for the Owl while the owner stands.
+
+### Run 27 (2026-10-28 02:26): Owl catalog, FPS phases
+- Phases ran (A 0-40 s, B 40-80 s, C 80-120 s, D after); height resets 0 this time. Owner did not
+  report FPS per phase: FPS cause still unknown.
+- Owl (c5060, NpcParam 50600000) accepted 3000-3049 (except 3022), 3060, 3061, 3063-3066, 3068,
+  3069, 3090-3093, 3100; nothing in 3200-6900 (step 100) — those left it in 40000 (idle).
+- Owner: block and parry appeared in the last ~20 s, i.e. among 3090-3093 and 3100 (the only
+  accepted ids then); jump hard to pick, many jump attacks.
+- Run 28: slow catalog (3 s each) of 3090, 3091, 3092, 3093, 3100, 3060, 3061, 3063-3066, 3068,
+  3069 for the owner to name block, parry, dodge, jump.
