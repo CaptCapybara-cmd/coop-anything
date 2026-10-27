@@ -4,9 +4,9 @@
 |---|---|
 | Engine | Unity 2021.3.35f1, IL2CPP, Windows x64 (BepInEx 6.0.0-be.790 Unity.IL2CPP, HarmonyX, Il2CppInterop) |
 | Versions tested | Steam (app 2527500), buildid 19029065. `MiSideFull.exe` SHA-256 `562723c950c2be95ecbdc516530aee56b97837e2ac6610b8b5bce394e23022c0` |
-| Projects | MiSide Together ([miside-coop](https://github.com/multiplayereverything/miside-coop), [v0.3.1 pre-release](https://github.com/multiplayereverything/miside-coop/releases/tag/v0.3.1)); directory entry "MiSide Together" |
+| Projects | MiSide Together ([miside-coop](https://github.com/multiplayereverything/miside-coop), [v0.3.2](https://github.com/multiplayereverything/miside-coop/releases/tag/v0.3.2)); directory entry "MiSide Together" |
 | QA level | automated |
-| Last updated | 2026-10-26 |
+| Last updated | 2026-10-27 |
 
 ## Where things stand
 
@@ -24,6 +24,7 @@ MiSide Together lets 2 to 4 players play MiSide's story together. The host leads
 - **Loading chapters:** `SceneManager.LoadScene("Scene 1 - RealRoom")` loads a broken scene, with a NRE every frame and no `PlayerMove`. The game's own route works instead: set `GlobalGame.LoadingLevel` to the chapter name, then load `SceneLoading`. Chapter changes in co-op run the game's `Scene_Load` on every machine.
 - **Player:** `PlayerMove` is the controller (`animPerson` is the body Animator, plus `TeleportPlayer`). `PlayerPerson.meshes` and `meshHead` are the body renderers. Held items are parented under the hand bones, at `GlobalTag.playerRightItem`.
 - **Steam:** `steam_api64.dll` ships with the game, and Steamworks.NET is in the interop. Starting the exe directly makes Steam relaunch it and drop the command-line arguments, so lab copies carry `steam_appid.txt` (2527500).
+- **First start:** a fresh install (no settings in the save folder) stops in `SceneLoading` on a LANGUAGE and VOICE picker (`ChangeLanguageStart`) until someone picks, so automated copies hang on the loading screen with no error in any log. The lab answers it the way a player would: `ChangeLanguage(i)`, `ChangeVoice(i, true)`, then `Apply()`, with the indexes read from the English buttons (`ChangeLanguageStartButton.index`, told apart by their `Language` / `Voice` parent).
 - **Saves:** clients continue from the host's save files. Their own saves are backed up while connected and restored afterwards, or at the next start after a crash.
 
 ## What we changed
@@ -46,6 +47,17 @@ A one-player tour (`inventory`) loads every chapter. It lists each chapter's gam
 - **Detection:** the mod reads this from the game's interaction data, so no list per cutscene is kept.
 - **Trap:** the item is the object itself, moved into the hand slot when the pickup animation reaches that moment. The first version watched the wrong object, and some earlier test passes were false. Check what really ends up under the hand bone.
 
+### A cutscene can be playing without having been started
+
+- **Bug:** at the Scene 12 exit door, the host went into the cutscene and the client did not, ending 4 m apart. Two causes: the host's cutscene command reached the client a moment before the client's story had switched the cutscene object on, so it was ignored; and the client's timeline was already playing on awake, without `Playable_Animation.Play` (which puts the player into it) ever running. A third piece: the door's event also starts a player animation (hiding from Mita) that only fires on the host.
+- **Fix:** cutscene starts are retried for 5 s like other story events, and "already playing" only counts when `Play` really ran on that machine. The host reports every animation its story starts on its own player; a client that has not started the same one within a second plays it (checked by the client's own object key, which differs where sibling order differs).
+- **Proof:** Scene 12 in the every-chapter run, both players ending 0.00 m apart.
+
+### A copy of the first-person body needs its shadows back
+
+- **Bug:** the other player looked flat and over-bright next to Mita. Their materials are the same toon shader with the same values; the difference is that the first-person body has `receiveShadows` off, so the copy stayed fully lit in shade.
+- **Fix:** turn `receiveShadows` on for the copy. A lab dump (`MT-LOOK`) lists every renderer's shader, probes, shadow flags and toon values for the local body, the copy and every other character, which is how this was found.
+
 ### Presses must survive a machine that is a moment behind
 
 - **Bug:** a press reaching a client whose room objects weren't enabled yet, or were in a different order, was lost. This broke the Scene 17 levers.
@@ -64,7 +76,7 @@ A one-player tour (`inventory`) loads every chapter. It lists each chapter's gam
   - `MT-METRIC`: frame cost, including the worst frame;
   - `MT-STATE`: every 2 s, the position, rotation and state of players, NPCs, dialogue lines and timelines, lined up across machines into desync numbers;
   - `MT-ANIM`: how late each NPC animation started on clients.
-- **v0.3.1:** all 20 tours pass with 2 to 4 players, including host migration and a 120 ms lag run. `scripts\interactions-all.ps1` presses every interaction in every chapter with 2 players: 16 of 18 chapters pass.
+- **v0.3.2:** all 21 tours pass with 2 to 4 players, including host migration and a 120 ms lag run. `scripts\interactions-all.ps1` presses every interaction in every chapter with 2 players: 17 of 18 chapters pass. The one left is Scene 13, where the other player stays seated at the PC after the host takes the cartridge (presser-only, so expected).
 - Not covered: the Scene 1 phone pickup itself (Scene 1's opening holds the host back in the lab), and a two-account Steam session over Valve's relay.
 
 ## How to play
@@ -86,6 +98,6 @@ Everyone needs the same game build and mod build.
 ## Next steps
 
 - Share the Scene 13 to 15 computers.
-- Make the last two chapters in the every-chapter interaction run pass.
+- Make the every-chapter run accept the Scene 13 seat, and prove the Scene 1 phone pickup.
 - Run a real two-account Steam session.
 - Play the story through in co-op and write it up for `verified-playthrough`.
