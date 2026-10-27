@@ -452,3 +452,13 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   request model 5060 4 m in front of the Hero; then pin the character with that NpcParam id.
   Unknown: whether retail steps the creator (+0x1b0), and whether a spawned character reaches
   the mod's registry (fed by the ApplyEffect hook).
+
+### Run 25 (2026-10-28 02:10): spawn works
+- Log: NpcParam rows for c5060 = 50600000, 50600080, 50601000, 50601010, 50601080, 50609080,
+  50609090, 50609091. Creator vftable OK, idle byte +0x1b0 = 1 (retail steps it), request
+  bytes OK; model 5060 / NpcParam 50600000 / think 50600000 requested.
+- Owner: the Owl appeared and killed him. The puppet code never pinned it: the spawned
+  character did not appear in the mod's registry (fed only by the ApplyEffect hook).
+- Offline: STEP_LoadWait ends with `creator+0x1b8 = 0xa492e0(WorldChrMan, &creator+0x100)`, the
+  created ChrIns. Fix: watch +0x1b8 after the request, check char id = NpcParam id, pin it and
+  switch its logic off at once.
