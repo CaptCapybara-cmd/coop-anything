@@ -354,3 +354,22 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Launch script reported the simulator running before the game started.
 - Owner: "everything works as it should" — the puppet follows, turns with him, and drops the run
   animation when he stops. One run, owner-observed; no automated check.
+
+## Session 1 (cont.): actions — native ForcePlayAnimation (offline, 2026-10-28)
+
+### Observations (1.06 image)
+- RTTI: `EventEntityCommandUtil::ComCmd_ForcePlayAnimation(int, int)` (vftable 0x29ac598, method
+  0x754720) and `ComCmd_PlayAnimation` (0x29ac588 / 0x754800) forward to `EventChrEntity` vt[+0x38]
+  and vt[+0x30].
+- vt[+0x38] = 0x750e00: `0xbd84c0([[ChrIns+0x1ff8]+0x58], anim_id)`. 0xbd84c0 stores the id at
+  module+0x10 and at `[owner+0x20]+0x24` (owner via 0xb271d0). vt[+0x30] = 0x751120: same call,
+  but only when 0xbd8430 says the module is idle (PlayAnimation vs ForcePlayAnimation).
+- RTTI also lists `NetworkManipulator` and `NetAIManipulator`: probably how the game drives
+  remote players; not analysed.
+
+### Run 21 plan (puppet v5)
+- Learn the remote's rest animation (unchanged ≥1 s while still). When the remote animation
+  changes to something else while standing, call 0xbd84c0 (byte-checked) with
+  `SEKIRO_COOP_PUPPET_ACTION_ANIM` (default 3000, an enemy attack id seen in run 8). Stop and
+  periodic resets are held for 1.5 s after it. Every remote animation transition is logged, to
+  map player animation ids to actions. Launch script copies the DLL log next to it.
