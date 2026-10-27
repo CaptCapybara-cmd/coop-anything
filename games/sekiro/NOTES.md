@@ -183,3 +183,14 @@ handle at ChrIns+0x08 re-checked before each write.
 - Next: read-only mirror scan from the ChrIns (BFS through pointer fields, depth 3, ≤4000 objects,
   VirtualQuery-checked) for every float triple equal to the position, twice 10 s apart, with writes
   paused 1 s before each scan.
+
+### Run 7 (2026-10-27 16:53): mirror scan from the ChrIns
+- Scan A (puppet had reverted to its spawn point during the pause): 8 hits, mostly spawn/home-position
+  copies: chr+0xe0, chr+0x1050, chr+0x1060, chr+0x50>+0x1a0, chr+0x58>+0x5a0, chr+0x18>+0x28>+0x1a0,
+  chr+0x50>+0x18>+0x58>+0x138, chr+0x58>+0x340>+0x0>+0x258.
+- Scan B (puppet away from spawn): 3 hits: chr+0x1050, chr+0x1060, chr+0x18>+0x28>+0x80.
+- Both scans hit the 4000-object cap; the known path chr+0x1ff8>+0x68>+0x80 was not reached.
+- Derived (guess): chr+0x1050/+0x1060 = live transform copies inside ChrIns;
+  chr+0x18>+0x28 likely another path to the physics module (same +0x80).
+- Next: write position to chr+0x1050/+0x1060 as well, count per-copy reverts; scan rooted at the
+  physics module object.
