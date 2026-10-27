@@ -373,3 +373,18 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   `SEKIRO_COOP_PUPPET_ACTION_ANIM` (default 3000, an enemy attack id seen in run 8). Stop and
   periodic resets are held for 1.5 s after it. Every remote animation transition is logged, to
   map player animation ids to actions. Launch script copies the DLL log next to it.
+
+### Run 21 (2026-10-28 ~01:35): ForcePlayAnimation works
+- 10 forced calls, 0 refused; 300 ms later the puppet's animation read 3000 in 9 of 10 cases
+  (once 7000). Owner: the puppet swings when he attacks, dodges or blocks, and jumps when he jumps.
+- The puppet's jump likely comes from the position/height path, not from the forced anim (guess).
+- Remote (= owner's) animation ids, in the owner's test order (attack ×3, block ×2, jump ×2,
+  dodge ×2, run and stop). Derived from order, not confirmed:
+  - rest 790010 (also 0); attack 790040; block 50203000 → 50203010;
+  - jump 201001 → 201011 → 201040; dodge 213300 / 213301; run/stop 1151, 1200, 1500, 1510.
+- Unknown: whether the owner had the katana (790040 may be an unarmed swing).
+
+### Run 22 plan
+- Force only mapped ids (default 790040 → 3000), also while moving. Catalog probe: while the
+  owner stands still, play 18 candidate enemy ids, one every 3 s, logging whether each took,
+  so the owner can name the block, dodge and jump lookalikes. Mirror offset 5 m so swings miss.
