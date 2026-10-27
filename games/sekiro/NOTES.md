@@ -486,3 +486,10 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   accepted ids then); jump hard to pick, many jump attacks.
 - Run 28: slow catalog (3 s each) of 3090, 3091, 3092, 3093, 3100, 3060, 3061, 3063-3066, 3068,
   3069 for the owner to name block, parry, dodge, jump.
+
+### Run 28 (2026-10-28 02:33): Owl slow catalog
+- Owner: FPS stable at 60 in all phases of run 27, so the run 26 drop is not the puppet code
+  (guess: spawn spot in geometry; run 26 had 65 height resets, run 27 none).
+- All 13 ids played (puppet anim = id 300 ms later). Owner: no. 4 (3093) = block; no. 8 (3063)
+  = dodge, not sure. No parry or plain jump named.
+- Run 29 map: block 50203000 and parry 50002000 → 3093, dodge 213300/213301 → 3063, jump none.
