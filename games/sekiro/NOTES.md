@@ -402,3 +402,19 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Run 23 plan: watch u32 fields of Hero sm+0x10 / sm+0x28 / sm+0x58 / chr+0x20 for anim-like
   values (6-8 digits) to find the attack slot; fast catalog (152 ids, 0.4 s each) that logs which
   ids the puppet accepts.
+
+### Run 23 (2026-10-28 01:52): action slots found
+- Fast catalog (152 ids, 0.4 s each) on c1020: accepted 3000-3010, 3012, 3014, 3015, 3020, 3100.
+  Nothing in 4000-9900, 7001-7030, 10000-10040, 400000-410000 took. Owner: a jump-like one
+  around no. 2-3 (3001/3002), dodge-like around no. 4-5 (3003/3004).
+- Hero slot scan: the TimeAct object `[ChrIns+0x1ff8]+0x10` has two rings of 5 entries, stride
+  0x28. Ring at +0x20 (+0x48, +0x70, +0x98, +0xc0) = base layer (700000, 790010, 790500, 790040,
+  201001, 50203000, 213300, 1151 ...). Ring at +0x34 (+0x5c, +0x84, +0xac, +0xd4) also gets the
+  combo hits 50300000, 50300100, 50300010, 50300110, 50300020, 50300030, jump attack
+  50308000/50308050, parry 50002000 (guess), plus the base-layer actions. +0xf8/+0x100 mix both.
+- Derived: the snapshot's animation id is ring +0x20; attacks need ring +0x34.
+
+### Run 24 plan
+- PlayerSnapshot gains `action_id` + `action_seq`: any +0x34 slot changing to a non-zero id is a
+  new action. Puppet map: combo hit 1/2/3/4+ → 3000/3001/3005/3006, jump and jump attack → 3002,
+  dodge 213300/213301 → 3004; block/parry → nothing (no counterpart found). Wire format changed.
