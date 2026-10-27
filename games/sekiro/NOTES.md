@@ -388,3 +388,17 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Force only mapped ids (default 790040 → 3000), also while moving. Catalog probe: while the
   owner stands still, play 18 candidate enemy ids, one every 3 s, logging whether each took,
   so the owner can name the block, dodge and jump lookalikes. Mirror offset 5 m so swings miss.
+
+### Run 22 (2026-10-28 01:45): catalog
+- Rebuild needed a second try: rustc STATUS_ACCESS_VIOLATION again (third AV of a dev tool on the
+  owner's PC; cause unknown).
+- Catalog on c1020 (char 10201000): 3001, 3002, 3003, 3005, 3010 took (puppet anim = id after
+  300 ms); 4000, 5000, 5001, 5010, 6000-6002, 7000, 7001, 7010 did not (puppet stayed in 405002).
+  Owner: no. 2 a jump attack, no. 3 a lunge, then the lunge again, then nothing visible.
+- Remote id 790040 also stayed for >1 s while the owner stood, and a 3-4 hit combo did not change
+  the id between hits. Guess: `+0x1ff8 → +0x10 → +0x20` is a base layer / state (790010 idle,
+  790040 combat idle after a swing), not the attack animation. Block shows as 50203000 →
+  50203010 → 50203012 (and 400 in between while moving).
+- Run 23 plan: watch u32 fields of Hero sm+0x10 / sm+0x28 / sm+0x58 / chr+0x20 for anim-like
+  values (6-8 digits) to find the attack slot; fast catalog (152 ids, 0.4 s each) that logs which
+  ids the puppet accepts.
