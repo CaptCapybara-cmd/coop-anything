@@ -155,3 +155,11 @@ handle at ChrIns+0x08 re-checked before each write.
   ~0.3-0.4 m against every write (Hero height on a slope = inside terrain), ~300 writes/s
   (several per frame). Fix: keep the game-resolved height, max one write per 8 ms.
 - Re-sent with a read-back SHA-256 check of the file on the owner's disk.
+
+### Run 4 (2026-10-27 16:35): team write + re-pin + heading, game-resolved height
+- FPS normal (owner). Pin and re-pin worked: `re-pinned (same handle)` after death, repins=1.
+- Team byte ChrIns+0x74: 6 → 2 written once per pin (team_before=6, team_now=2). Whether the puppet
+  stopped attacking: not observed clearly yet. Other enemies (team 6) attacked as usual.
+- Keeping the game-resolved height made the puppet fall through the world: y −43 → −66 → −98 →
+  … → −265 m, anim 10000/10001 near the end, then stale/despawn. Owner saw it "disappear".
+- Fix: keep the game's height only within [Hero−1 m, Hero+2 m], else Hero+0.2 m.
