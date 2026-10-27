@@ -521,3 +521,11 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   through a bad equipment pointer. Derived: the c0000 character has no equipment data with
   NpcParam 0. Not in sekiro_coop.dll.
 - Run 32: same with NpcParam 540 (guess: a human-NPC row that may carry equipment).
+
+### Run 32 (2026-10-28 02:52): c0000 with NpcParam 540
+- Same crash, same place (sekiro.exe RVA 0x9cbf09, equipment-slot accessor 0x9cbe40).
+- Callers of 0x9cbe40 include 0x79dbe0 (passes `rcx+0x98`, slot 0-0x18) and 0x7ceaf0, 0x9cb210.
+- Derived: a c0000 character made by the enemy creator lacks the player equipment data the
+  c0000 model/render path reads. A Wolf-looking puppet needs the player-character path
+  (PlayerIns + its game data, as DS3 remote players), not the debug creator. Not attempted.
+- Launch script back to the Owl puppet (5060, action map).
