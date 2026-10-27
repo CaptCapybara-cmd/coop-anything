@@ -266,3 +266,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   dialog after the death/reload; cause not in the log.
 - Fixes: simulator sends heartbeats while waiting; puppet is neutralised (logic off, team 2) before
   any early return; grace log rate-limited.
+- Crash cause (Windows Application Error log): AV 0xc0000005 in sekiro_coop.dll at RVA 0xac37c
+  (same DLL, PE stamp 0x6ae0ed0a). Disassembly: sekiro-coop's `live::chrins_snapshot` reading
+  `[[ChrIns+0x1ff8]+0x18]` on a freed ChrIns. Called from the host EnemyStates broadcast, which only
+  runs with a session (earlier solo runs never hit it). Registry entries outlive death/reload.
+- Fix: prune the registry every frame (handle at +0x08 must match, every hop VirtualQuery-mapped)
+  and re-check right before each snapshot/HP write.
+- Side note: the owner's event log also shows AVs in cargo.exe (21:11) and powershell.exe (20:55)
+  in unknown modules, plus the earlier rustc AV during the first build. Not explained; worth
+  keeping in mind if unrelated crashes appear.
