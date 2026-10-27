@@ -4,13 +4,13 @@
 |---|---|
 | Engine | Unity 2020.3.49f1, Mono, Windows x64 (BepInEx 5.4.23.5 or MelonLoader 0.7.3, Harmony) |
 | Versions tested | Steam (app 1275890), game version 0.14.5, buildid 24261910. `BALDI.exe` SHA-256 `b9bd86d050c90811d037a978ab246b7c06c9370bf25d0e8f83b35d3a1a120026`, `Assembly-CSharp.dll` SHA-256 `635b0d164a7050942077f3a7509ad2e4dc49a4d860e476ebe6906c7508dfa367` |
-| Projects | Baldi Together ([baldi-plus-coop](https://github.com/multiplayereverything/baldi-plus-coop), [v0.9.0 pre-release](https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.0)); directory entry "Baldi Together" |
+| Projects | Baldi Together ([baldi-plus-coop](https://github.com/multiplayereverything/baldi-plus-coop), [v0.9.2 pre-release](https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.2)); directory entry "Baldi Together" |
 | QA level | automated |
 | Last updated | 2026-10-26 |
 
 ## Where things stand
 
-Baldi Together lets up to four players run Hide & Seek floors together, over LAN or online through Steam. The host runs the real game; NPCs, doors, pickups, the shop and results follow the host. Each player can be caught on their own and then spectates teammates. It is an alpha. The main mode is covered by automated tests with real game processes, and the author's own hands-on testing (mostly on their own, not yet with friends) found it works well for the most part. Challenges, endless, field trips and random events have not been validated.
+Baldi Together lets up to four players run Hide & Seek floors together, over LAN or online through Steam. The host runs the real game; NPCs, doors, pickups, the shop and results follow the host. Each player can be caught on their own and then spectates teammates. It is an alpha. The main mode is covered by automated tests with real game processes, and the author's own hands-on testing (mostly on their own, not yet with friends) found it works well for the most part. Random events follow the host (0.9.2): fog, the Mystery Room, the broken ruler and the time-out are mirrored in every player's game, and the rest run on the host only. Field trips pick the same Pitstop trip on every copy. Challenges and Endless have not been validated.
 
 ## Existing work
 
@@ -66,6 +66,18 @@ When a Steam game already ships Steamworks.NET and initializes it, a mod can use
 
 Nothing is downloaded or bundled, Steam shows the players as playing the real game, and no `steam_appid.txt` is written. The mod's existing protocol needed one change: an `IPacketLink` interface, so one Steam connection can be a Transport link, with one Transport frame per reliable Steam message. The handshake and everything above it is the same as on LAN. Check first that the game's `SteamManager` really calls `RunCallbacks` every frame, and look for side effects. Here, opening the overlay pauses the game, so INVITE FRIENDS is only on the lobby screen. Steam rooms have no host migration, because migration needs addresses.
 
+### Random events: one schedule, the host's
+
+Each copy of the game builds the same seeded list of random events for a floor. The start order, the gaps and each event's length come from `UnityEngine.Random` at run time, so two copies running their own timers drift apart. In Hide & Seek only the host starts the timers. A challenge scene starts them directly as it loads, so the mod blocks `EnvironmentController.StartEventTimers` on client worlds.
+
+The host sends each event's announcement, begin and end by its index in the shared list. Clients play the jingle and the TV intro. For events whose effects are each player's own (fog, the Mystery Room, the broken ruler, and the time-out's rule break, lights and music), a client runs the event's own `Begin`, with the event's end timer disabled so only the host's End stops it. Baldi's anger from the time-out stays on the host. The test runs a fog event on the host and checks the client's copy turns on and off with it. A mutant that sends nothing must fail it, and it does.
+
+The Pitstop picked its field-trip room with `UnityEngine.Random` too, which could give two copies different Pitstops and fail the world match. The pick is now seeded from the run seed and the floor.
+
+### Only lobby members may connect
+
+The host's Steam listen socket used to accept any SteamID that called it, up to three. The playbook's rule from [networking-steam-spacewar](../../playbook/networking-steam-spacewar.md) applies to connection-based sockets too: only members of the host's lobby get in. Steam's member list can reach the host a moment after the joiner's call, so a caller who isn't listed yet is held for up to 5 s before being refused.
+
 ### Testing Steam with one account
 
 One Steam account cannot open a P2P connection to itself, but most of the Steam path can still be tested in one process:
@@ -85,8 +97,9 @@ What it cannot cover is Valve's relay between two accounts.
 
 - `scripts/test.ps1`: 26 transport checks: an idle link survives past the read timeout, a silent raw peer still times out, and 1,500 queued packets wait for a stalled loop. Its mutation twin (`BT_MUTANT=no-keepalive`) must fail the idle-link check, and it does.
 - `scripts/link-test.ps1` (BepInEx host, MelonLoader client, through `tcp-chaos.py` on `bad_wifi`): 7/7. The client waited through a 25 s host stall (`-bt-lab-stall-host 25`) without dropping or migrating, and the host kept the client. Both sides survived a 10 s two-way outage and stayed in sync. A cut link was still detected. With `-bt-lab-no-keepalive` the client drops at 14,998 ms and migrates, which is the reported bug, so the test can fail.
-- `run-tour.ps1 -Steam` (one process, Steam signed in): 16/16. Steam's socket pair under two real Transports (connect, both directions, a 64 KB frame, 200 frames in order, final frame before close, closing side ends its peer), the Steam pages, a real `bt=lab` lobby with Join Game presence, and leaving.
-- `scripts/lab-suite.ps1` on the 0.9.0 build: the transport checks and their mutant; feature tours (lobby 32, spectator 16, hide-and-seek audio 7, spectator UI 18, items 18, Beans 14, Arts and Crafters 16, Mrs. Pomp 17, The Test 15, Dr. Reflex 16, Chalkles 15, Hall Monitor 25, compat-fail 3); two-process tests (LAN 15/15, NPC sync 15/15, core co-op 14/14, soak 12/12, link 7/7). Every game launch uses `-bt-lab -bt-diagnostics` and test-owned processes only.
+- `run-tour.ps1 -Steam` (one process, Steam signed in): 17/17 on 0.9.2, including the lobby gate; its no-gate mutant fails it. Steam's socket pair under two real Transports (connect, both directions, a 64 KB frame, 200 frames in order, final frame before close, closing side ends its peer), the Steam pages, a real `bt=lab` lobby with Join Game presence, and leaving.
+- `launch-lab.ps1 -EventSync` with `tests/verify-events.py` (0.9.2): 7/7; the no-event-sync mutant fails (2/7). `client_events_host_only` in the core test: a client asked to start its own event timers must refuse, and a mutant that lets it fails.
+- `scripts/lab-suite.ps1` on 0.9.2 (second PC, quiet): every tour, two-process LAN, NPC sync, core, encounter 45/45, soak 12/12 (mod cost about 0.2 ms per frame), link and shop tests, with no retries. Lab copies run as small minimized windows at low priority. Earlier, on the 0.9.0 build: the transport checks and their mutant; feature tours (lobby 32, spectator 16, hide-and-seek audio 7, spectator UI 18, items 18, Beans 14, Arts and Crafters 16, Mrs. Pomp 17, The Test 15, Dr. Reflex 16, Chalkles 15, Hall Monitor 25, compat-fail 3); two-process tests (LAN 15/15, NPC sync 15/15, core co-op 14/14, soak 12/12, link 7/7). Every game launch uses `-bt-lab -bt-diagnostics` and test-owned processes only.
 - The two-process encounter test passed 45/45 on the final build after an intermittent failure in an earlier suite run. Some two-process launches stall at startup and are retried once.
 - **Hands-on:** the author has played it mostly on their own and reports it works well for the most part. It has not been played with friends yet.
 - Not covered yet: a Steam session between two accounts over Valve's relay.
@@ -103,11 +116,12 @@ Install BepInEx 5.4.23.5 or MelonLoader 0.7.3 (one loader per game copy; the two
 
 - A Steam room ends when its host leaves; only LAN games migrate to a new host.
 - Opening the Steam overlay pauses the game during a run.
-- Challenges, endless, field trips, random events and other mods have not been tested with co-op.
+- Flood, party, gravity, Balder Dash and student shuffle run only in the host's game; their NPCs and doors appear for everyone, but each player's own effects (water, balloons, the flipped view) do not.
+- Challenges, Endless and other mods have not been tested with co-op. A challenge win ends the host's game, which disconnects everyone.
 - Join before the run starts; joining a run already in progress is not supported.
 
 ## Next steps
 
 - Run a real two-account Steam session over Valve's relay.
-- Validate challenges, endless and field trips, and sync random events.
+- Validate challenges and Endless (win and results for everyone, repeating notebooks), and mirror the remaining events' local effects.
 - Play a full run in co-op and write it up for `verified-playthrough`.
