@@ -72,3 +72,33 @@ Whether Sekiro Online 2.05 still works on the current Steam client.
 
 ### Derived
 - Building, launching and every live check must run on the owner's PC.
+
+## Session 1 (cont.): first live run, 2026-10-27
+
+Setup (owner PC, commands run by owner):
+- sekiro-coop @ 1ef5fa8 from the GitHub archive; toolchain 1.78.0 (from rust-toolchain.toml), MSVC 2022.
+- First `cargo build` hit a one-off rustc STATUS_ACCESS_VIOLATION on sekiro-sdk-bridge; an identical
+  rebuild passed. (`-C linker-plugin-lto` in that command is cargo's own flag for `lto = "thin"`.)
+- MinHook: vendored `vendor/minhook/{src,include}` is byte-identical to official TsudaKageyu/minhook
+  @ d94c64d. Rebuilt `MinHook.x64.lib` from it with cl/lib (/MD /O2) via vcvars64.bat and linked with
+  MINHOOK_LIB_DIR instead of the prebuilt `vendor/lib/MinHook.x64.lib`.
+- me3 v0.11.0 `me3-windows-amd64.zip` from the official release: SHA-256
+  1ddc6c3d9468aa6c7f99bd6b080aa94977e0d6fab771368ca89387a1c8cda4b7 = GitHub asset digest (and = the
+  zip vendored in sekiro-coop). me3.exe / me3-launcher.exe Authenticode Valid, signer Gary Tierney.
+- Launch: `me3 launch -g sekiro -e <test dir>\sekiro.exe --disable-arxan true --online false
+  --savefile coop-test.sl2 -p sekiro-coop.me3`. Owner saves backed up first.
+
+### Observations (log, solo, no session)
+- me3: "Sekiro: Shadows Die Twice 1.06.0.0 Worldwide"; dearxan reports arxan detected: false;
+  savefile override to coop-test.sl2 applied.
+- Mod: `module loaded version=V1_06 size=70066176 base=0x140000000 has_base_addrs=true`
+  (AOB-based detection, so the SIZE_V1_06 typo did not matter).
+- `hook installation finished installed=6 total=6`: SetFlag 0x1406c4520, ApplyEffect 0x1409f54a0,
+  DeleteEffect 0x140bfb6d0, GiveItem 0x14091c970, AddExperience 0x1407c0ef0, WarpBonfire 0x14068e870.
+- Player state readable (hp 320/320, posture 120/120, anim, pos, IGT). SetFlag edge events and
+  ApplyEffect/DeleteEffect calls logged. Param tables found: AtkParam_Pc 443, AtkParam_Npc 2396,
+  SpEffectParam 3096, BehaviorParam 3128, NpcParam 1279, ItemLotParam 1926.
+- chrins registry count=2 shortly after load. No crash during the new-game opening.
+
+### Not yet checked
+- UDP session (two instances or peer-simulator), remote apply, enemy-state broadcast.
