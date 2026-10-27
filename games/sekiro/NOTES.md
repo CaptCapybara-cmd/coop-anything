@@ -211,3 +211,32 @@ handle at ChrIns+0x08 re-checked before each write.
 - Proposed next: dump the decrypted sekiro.exe image from memory (read-only, kept in local/,
   never committed) and analyse it offline (disassembler) to find warp / animation / per-character
   AI-disable natives and how DS3-lineage player slots are spawned.
+
+## Session 1 (cont.): offline analysis of a 1.06 memory image, 2026-10-27
+
+Image: `sekiro.exe` module read from the running game with ReadProcessMemory (70,066,176 bytes,
+SHA-256 33533c5a…; kept in `local/`, never committed). `.text` decrypted (entropy 6.65, 27,572
+`48 89 5C 24 08` prologues); 32 of sekiro-coop's 42 AOBs hit uniquely (DeleteEffect misses because
+the dump was taken with the mod's detours installed). Tools: GNU objdump on the raw image, a small
+MSVC-RTTI walker (type descriptor → complete object locator → vftable).
+
+### Observations (RVAs for Steam 1.06, module base 0x140000000)
+- Script commands are local classes in `NS_SPRJ::EventEntityCommandUtil::ChrCmd_*` (RTTI), each with
+  one method that forwards to an `EventChrEntity` (vftable 0x29ac0b8, ChrIns pointer at +0x10):
+  - `ChrCmd_EnableLogic(int id, bool)` → clears/sets bit 0 of `[ChrIns+0x50]+0x190` (ChrCtrl);
+    also zeroes 16 bytes at +0x80 of another per-character object. RVA 0x9ede00.
+  - `ChrCmd_SetDisableGravity(int, bool)` → `[[ChrIns+0x1ff8]+0x68]+0x92b = b` (0x9f5450).
+  - `ChrCmd_SetDisableMapHit(int, bool)` → bit 0x10 of `[ChrIns+0x50]+0x194` (0x7de220).
+  - `ChrCmd_Warp(int point, bool)` → resolves the point to pos/rot, then
+    `ChrIns->vt[+0x6A0](chr, const float4* pos, const float4* rot, 1, 0)` (0x9f81f0, same slot for
+    ChrIns/EnemyIns/PlayerIns), then `ChrIns+0x1a10 |= 2`.
+  - vt[+0x6A0] → vt[+0x698] (0x9f8100): sets `ChrIns+0x1af5`, calls `ChrCtrl->vt[+0x70](pos, rot, a, b)`,
+    then `vt[+0x680]()`, `vt[+0x678](a)`.
+  - Rotation quaternion: physics module +0x70.
+  - Other command classes present: SetTeamType, WarpDmy, ChangeThink, ResetThink, EnableInvincible,
+    SetNetworkUpdateValue, ChrResetAnimation.
+- RTTI also has ChrManipulator / ComManipulator (vftables 0x29d2ae0 / 0x29d2fb8).
+
+### Derived
+- Puppet v3 uses ChrIns::Warp (vt+0x6A0) on the game thread (guarded by checking the slot equals
+  base+0x9f81f0) and per-character EnableLogic off instead of the global debug flag.
