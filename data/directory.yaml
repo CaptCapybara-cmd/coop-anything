@@ -8443,3 +8443,57 @@
   - https://github.com/cranebeaker/coop-anything/issues/214
   checked: '2026-10-26'
   made_with_coop_anything: true
+
+- game: Code Vein
+  year: 2019
+  engine: Unreal Engine 4
+  project: CoopSeamless (UE4SS Lua, work in progress)
+  url: https://github.com/cranebeaker/coop-anything/tree/main/games/code-vein
+  other_urls:
+  - https://github.com/cranebeaker/coop-anything/issues/207
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: yes
+    story: unknown
+    enemies: yes
+    world_state: unknown
+    items: per-player
+  players: '2'
+  networking: steam-relay
+  open_source: no
+  last_activity: 2026-10
+  qa: none
+  notes: Extends the game's own host + 1 guest Steam session instead of replacing it (UE4SS Lua plus a native hook DLL). Host
+    re-signals and guests re-join automatically after field deaths, host deaths, boss-room deaths and boss kills (two-PC sessions);
+    co-op works in areas whose boss is dead. Native experiments for resting at Mistles in co-op and keeping a dead guest in the session
+    (spectating) are in progress. Goal is seamless story co-op for 3+ players. Not released; code not yet published. UE 4.18, Denuvo
+    present, UE4SS works with HookLoadMap = 0.
+  sources:
+  - https://github.com/cranebeaker/coop-anything/issues/207
+  checked: '2026-10-27'
+  made_with_coop_anything: true
+- game: Code Vein
+  year: 2019
+  engine: Unreal Engine 4
+  project: Nexus mod 192 ("co-op mod")
+  url: https://www.nexusmods.com/codevein/mods/192
+  other_urls: []
+  kind: mod
+  status: partial
+  coop_scope:
+    players_visible: yes
+    story: unknown
+    enemies: unknown
+    world_state: unknown
+    items: unknown
+  players: '2'
+  networking: steam-relay
+  open_source: unknown
+  last_activity: 2020
+  qa: community-reports
+  notes: Per a forum reply, it only lets the host send distress signals in areas whose boss is dead; the guest is still
+    removed on boss death and fog walls remain. The mod page itself was not checked.
+  sources:
+  - https://steamcommunity.com/app/678960/discussions/0/7098294290812770549
+  checked: '2026-10-27'
