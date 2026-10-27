@@ -102,3 +102,21 @@ Setup (owner PC, commands run by owner):
 
 ### Not yet checked
 - UDP session (two instances or peer-simulator), remote apply, enemy-state broadcast.
+
+## Session 1 (cont.): data plane vs peer-simulator, 2026-10-27
+
+Setup: peer-simulator (built from the same tree) `--bind 127.0.0.1:28001 --peer 127.0.0.1:28000
+--as client --fake-events`; game as host with SEKIRO_COOP_BIND=127.0.0.1:28000,
+SEKIRO_COOP_PEER_ADDR=127.0.0.1:28001. Loopback only.
+
+### Observations
+- `session established seed=MatchSeed(...)` within seconds of load.
+- Remote snapshots arrive (`remote=peer=Client hp=420/420 pos=(..) anim=790010/790020`).
+- Remote BridgeEvents arrive every 300 frames (EventFlagSet 11100100, SpEffectApplied 4800).
+- Host EnemyStates broadcast; echo resolved: `matched=2 unmatched_count=0`, `applied=0`
+  (SEKIRO_COOP_APPLY_REMOTE not set), divergences = the simulator's HP-1.
+- peer-sim log: snapshots sent every second, EnemyStates echoed with HP-1.
+- No desync kill, no crash. Earlier run without a listening peer: UDP `os error 10054` every 2 s,
+  retry loop works, game unaffected.
+- => Reproduces the author's data-plane claims on this machine (QA level: one game client +
+  simulator; not two real clients).
