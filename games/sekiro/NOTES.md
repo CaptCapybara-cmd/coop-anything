@@ -1,7 +1,6 @@
 # Sekiro: Shadows Die Twice — co-op notes
 
-Session 1: 2026-10-27. Owner switched from Spore (see games/spore/NOTES.md: stopped because the
-owner's copy was not from a store). Phase 0 (triage) + phase 1 (research).
+Session 1: 2026-10-27. Phase 0 (triage) through a first round of live probes.
 
 ## Game identity (owner)
 

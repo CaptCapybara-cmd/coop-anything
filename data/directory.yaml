@@ -3290,20 +3290,24 @@
   kind: mod
   status: prototype
   coop_scope:
-    story: unknown
-    enemies: unknown
-    world_state: unknown
+    players_visible: no
+    story: partial
+    enemies: partial
+    world_state: partial
     items: unknown
   players: '2'
   networking: direct-ip
   open_source: true
-  last_activity: unknown
+  last_activity: 2026-06
   qa: none
-  notes: Rust seamless two-player co-op for Sekiro v1.06 injected via me3 with a UDP data plane; README says not
-    yet end-user playable.
+  notes: Rust seamless two-player co-op for Sekiro Steam 1.06 injected via me3, MinHook, raw UDP direct IP
+    (Steam P2P stub). Session, player snapshots, flag/effect events and host enemy HP reproduced against its
+    peer simulator on one PC (2026-10-27); the remote player is not rendered. Puppet probes in games/sekiro.
+    AGPL-3.0-or-later.
   sources:
   - https://github.com/mstampfli/sekiro-coop
-  checked: 2026-10-16
+  - https://github.com/cranebeaker/coop-anything/blob/main/games/sekiro/NOTES.md
+  checked: 2026-10-27
 - game: Lies of P
   year: 2023
   engine: Unreal Engine 4
