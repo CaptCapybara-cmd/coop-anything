@@ -240,3 +240,10 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 ### Derived
 - Puppet v3 uses ChrIns::Warp (vt+0x6A0) on the game thread (guarded by checking the slot equals
   base+0x9f81f0) and per-character EnableLogic off instead of the global debug flag.
+
+### Run 9 (2026-10-27 ~21:05): puppet v3 (native warp every 33 ms + per-character logic off)
+- Owner: puppet does not attack (per-character EnableLogic off works without the global AI freeze),
+  FPS normal, follows the player, but flickers. Log of that run was lost (next launch cleared it).
+- Guess: vt[+0x698] resets per-warp state (`ChrIns+0x1b94 = 1.0f` when 0xa4a650 is true; render
+  interpolation), so warping 30×/s flickers.
+- Next: hybrid — native warp every 500 ms or when >2 m off, raw physics steps every 8 ms between.
