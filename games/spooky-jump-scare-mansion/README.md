@@ -4,13 +4,13 @@
 |---|---|
 | Engine | Unity 2021.3, Mono, Windows x64 (BepInEx 5.4.23.5 or MelonLoader 0.7, Harmony) |
 | Versions tested | Steam (app 577690), buildid 12368455. `SpookyUnity.exe` SHA-256 `ed13875fc3eab0f0afe677c3eee936e1885789b032c78ccab3a59a4c8b79b74a` |
-| Projects | Spooky Together ([spooky-together](https://github.com/multiplayereverything/spooky-together), [v0.2.9 pre-release](https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.9)); directory entry "Spooky Together" |
+| Projects | Spooky Together ([spooky-together](https://github.com/multiplayereverything/spooky-together), [v0.2.11 pre-release](https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.11)); directory entry "Spooky Together" |
 | QA level | automated |
 | Last updated | 2026-10-26 |
 
 ## Where things stand
 
-Spooky Together lets 2 to 4 players run the mansion together: the base mansion, Endless, the hospital and the Dollhouse. Everyone is in the same room and is chased by the same specimens, and the team shares keys, items and the axe. Endings take the whole team. A lethal hit downs a player instead of ending the run while a teammate is still standing. It is an alpha. The author has played it with friends in real sessions, and it worked very well. Every fix is also covered by scripted tests with up to four hidden game copies. Steam has been tested with one account only, and nobody has written up a full playthrough yet.
+Spooky Together lets 2 to 4 players run the mansion together: the base mansion, Endless, the hospital and the Dollhouse. Everyone is in the same room and is chased by the same specimens, and the team shares keys, items and the axe. Endings take the whole team. A lethal hit downs a player instead of ending the run while a teammate is still standing. It is an alpha. The author has played it with friends in real sessions, and it worked very well. They played four players on separate PCs and Steam accounts. Every fix is also covered by scripted tests with up to four game copies. Nobody has written up a full playthrough yet.
 
 ## Existing work
 
@@ -54,11 +54,11 @@ Two scares close the game outright: Unknown Specimen 1's second pursuit and the 
 
 ### A mutation check for every fix
 
-Each fix has a lab-only switch (`-st-mutate <name>`) that turns it off. `scripts/mutants.ps1` runs the tour that guards each fix with its switch on, and every such run must fail. That proves the test can actually see the bug. There are 11 switches: retargeting (two kinds), hit routing, shared keys, weapon hits, elevator presses, stale locks, spawn pairing, the furnace, puzzle replays and missed endings. `tests/rules-test.py` checks the source in seconds, with no game: every message op has a handler and is built somewhere, every mutable static is reset or marked, every empty `catch` says why, and the version numbers agree.
+Each fix has a lab-only switch (`-st-mutate <name>`) that turns it off. `scripts/mutants.ps1` runs the tour that guards each fix with its switch on, and every such run must fail. That proves the test can actually see the bug. There are 16 switches: retargeting (three kinds), hit routing, shared keys, weapon hits, elevator presses, stale locks, spawn pairing, the furnace, puzzle replays, missed endings, key order for late joiners, room re-skins, early specimen spawns, endings during a room load and endings held for a load that never came. `tests/rules-test.py` checks the source in seconds, with no game: every message op has a handler and is built somewhere, every mutable static is reset or marked, every empty `catch` says why, and the version numbers agree.
 
 ## QA
 
-- `scripts/run-tour.ps1 -Tour <name> [-Players 4] [-Lag <ms>] [-Steam]` starts up to four isolated lab copies with hidden windows: a BepInEx host and MelonLoader or BepInEx clients. It runs one scripted tour and judges the run with `tests/verify-lab.py`, which checks:
+- `scripts/run-tour.ps1 -Tour <name> [-Players 4] [-Lag <ms>] [-Steam]` starts up to four isolated lab copies, minimized and small (480x270, lowest quality, 30 fps, below-normal priority) so they never take focus: a BepInEx host and MelonLoader or BepInEx clients. It runs one scripted tour and judges the run with `tests/verify-lab.py`, which checks:
   - the tour's checks;
   - the error count;
   - managed heap and object-count trends;
@@ -66,6 +66,10 @@ Each fix has a lab-only switch (`-st-mutate <name>`) that turns it off. `scripts
   - the room sequence;
   - the mod's CPU time per frame (budget 2 ms).
 - Lab players act like real players. They open real doors, pick up the axe and chop boards. Forced transfers or fake item ids would break the game and give false failures.
+- **v0.2.11, 4 players:**
+  - The full suite passed 29/29. It includes 150 ms lag, a soak over the LAN address with 120 ms lag, and full EM, KH and dollhouse mansions.
+  - The 7 switches touched in 0.2.10-0.2.11 were rerun, and all were caught.
+  - Lesson: a short tour gave the heap-slope rule only three samples, inside one garbage-collector sawtooth. The rule now needs five; the soak judges long runs.
 - **v0.2.9, 4 players:**
   - `rules-test.py` passes.
   - The new `pairing`, `furnace`, `puzzles` and `lateending` tours pass, along with `enemies`, `dollprops`, `ending` and `clientending`.
@@ -73,7 +77,7 @@ Each fix has a lab-only switch (`-st-mutate <name>`) that turns it off. `scripts
   - The mutation check: all 5 new switches were caught.
   - `test-transport.ps1`: 5/5.
 - **Earlier results:** 0.2.8 passed the quick suite 11/11 and its mutation checks 6/6. 0.2.2 passed the full suite 17/17, including a 10-minute 4-player soak.
-- **Real sessions:** the author has played it with friends, and it worked very well. No structured notes were kept, so it stays at `automated` rather than `verified-playthrough`.
+- **Real sessions:** the author has played it with three friends on separate PCs and Steam accounts (four players), and it worked very well. No structured notes were kept, so it stays at `automated` rather than `verified-playthrough`.
 - The Steam path runs real Steam lobbies and Steam Networking Sockets between lab copies on one account, over 127.0.0.1.
 - Not covered:
   - specimens chasing a teammate in real play (the retarget check counts the rewritten reads);

@@ -8449,7 +8449,7 @@
   project: Spooky Together
   url: https://github.com/multiplayereverything/spooky-together
   other_urls:
-  - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.9
+  - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.11
   - https://github.com/cranebeaker/coop-anything/tree/main/games/spooky-jump-scare-mansion
   kind: mod
   status: alpha
@@ -8471,12 +8471,12 @@
     and Taker damage decided on the host. Endings take the whole team; downed players spectate and revive at the
     next room. Covers the base mansion, Endless, the hospital and the Dollhouse. Taker boss attacks, health, stamina
     and some puzzle props are per player or refresh on re-entry; no host migration. Steam P2P through the game's own
-    Steamworks (lobbies, invites, Valve relay) or LAN/direct TCP 27020. v0.2.9 pre-release. The lab suite runs up to
-    four hidden game copies (mixed loaders) through scripted tours with error, heap, desync and frame-cost checks,
-    plus a mutation check per fix; the author has also played it with friends and reports it works very well. Steam was tested with one account only. Source is public with no licence file yet.
+    Steamworks (lobbies, invites, Valve relay) or LAN/direct TCP 27020. v0.2.11 pre-release. The lab suite runs up to
+    four minimized game copies (mixed loaders) through scripted tours with error, heap, desync and frame-cost checks,
+    plus a mutation check per fix; the author has also played it four-player with friends on separate Steam accounts and reports it works very well. Source is public with no licence file yet.
   sources:
   - https://github.com/multiplayereverything/spooky-together
   - https://github.com/multiplayereverything/spooky-together/blob/main/MODLOG.md
-  - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.9
-  checked: '2026-10-26'
+  - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.11
+  checked: '2026-10-27'
   made_with_coop_anything: true
