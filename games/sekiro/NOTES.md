@@ -430,3 +430,25 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   300 ms passed. Jump/dodge mapping removed (no lookalike on c1020).
 - Derived: an enemy puppet can only show the enemy's own moves. Exact moves need a puppet that
   uses the player's animation set (c0000), so the remote ids could be played as they are.
+
+## Session 1 (cont.): spawning a character (offline, 2026-10-28)
+
+### Observations (1.06 image)
+- `CSDebugChrCreator` (vftable 0x2a952a8) is allocated in the WorldChrMan constructor
+  (0xa46b80, `[this+0x3148]`) and stepped from WorldChrMan's update (0xa50a1c: vt[+0x10]).
+  Steps: STEP_Idle 0xc0ff70 (sets +0x1b0 = 1), STEP_Load 0xc0ff80, STEP_LoadWait 0xc10010.
+- `CSDebugChrPerfChecker::_STEP_CreateChr` (0xc15f00) drives it: +0x118 = NpcParam id (looked up
+  in SoloParamRepository by 0x10c6750), +0x114 = second id (ThinkParam, guess), +0x1a4 = distance
+  in front of the Hero, then `0xc0f2a0(creator, model)`.
+- 0xc0f2a0: only if +0x1b0 != 0, store the model number at +0x1a0 and run 0xc10880: position =
+  Hero position + forward × (+0x1a4) + up × (+0x1a8), angle from +0x1ac, name formatted from the
+  model number into +0x120, then switch to the load step.
+- Model ids (soulsmodding.com character list): Owl c5060, player c0000, c1020 = Samurai General
+  (the run 8-24 puppet; c1010 is the Ashina soldier).
+
+### Run 25 plan
+- `SEKIRO_COOP_SPAWN=5060:auto`: 10 s after load, log the NpcParam rows 50600000-50609999, take
+  the first, check the creator (vftable, idle byte, request-function bytes), set the fields and
+  request model 5060 4 m in front of the Hero; then pin the character with that NpcParam id.
+  Unknown: whether retail steps the creator (+0x1b0), and whether a spawned character reaches
+  the mod's registry (fed by the ApplyEffect hook).
