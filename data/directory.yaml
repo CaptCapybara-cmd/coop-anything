@@ -8695,3 +8695,37 @@
   - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.11
   checked: '2026-10-27'
   made_with_coop_anything: true
+- game: Crime Scene Cleaner
+  year: 2024
+  engine: Unity (IL2CPP)
+  project: Crime Scene Cleaner Co-op
+  url: https://github.com/gogoigor51-tech/crime-scene-cleaner-coop
+  other_urls: []
+  kind: mod
+  status: playable
+  coop_scope:
+    players_visible: 'yes'
+    story: 'yes'
+    enemies: unknown
+    world_state: 'yes'
+    items: shared
+  players: '2'
+  networking: steam-relay
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: automated
+  notes: BepInEx 6 be.791 IL2CPP plugin for Steam build 26046462. Co-op screen in the main menu (host or join a
+    Steam friend, pick a save slot); the client follows the host into jobs, both leave together, laptop jobs reach
+    both, each keeps their own report, money and skills. Shared items, bodies (carry, throw, van), blood cleaning
+    and new stains, trash and bags, doors, drawers, lifts, power, conveyors, hacking terminals, furniture back in
+    place and knocked over, evidence, valuables, secrets, cassettes, shards, story objects and objective flags; the
+    other player is a skinned figure with the tool in hand and a carried body on the shoulder. Two players finished
+    chapters 1-6 together (0.4.1); 0.4.2 fixes checked on one job and by bot suites (two game copies on one PC over
+    localhost UDP driving items, stains, bodies, doors, trash, world machinery, jobs, laptop mails, the CCTV laptop
+    and a mutant run). Known gaps - deleted CCTV recordings are per player; 3-4 players, Nightmare and the last
+    chapters untested. MIT. Write-up in games/crime-scene-cleaner.
+  sources:
+  - https://github.com/gogoigor51-tech/crime-scene-cleaner-coop
+  - https://github.com/gogoigor51-tech/crime-scene-cleaner-coop/releases/tag/v0.4.2
+  checked: '2026-10-27'
+  made_with_coop_anything: true
