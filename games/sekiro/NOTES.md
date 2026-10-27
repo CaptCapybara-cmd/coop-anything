@@ -146,3 +146,12 @@ handle at ChrIns+0x08 re-checked before each write.
   can be driven from a game-thread hook without the EMEVD/UXM pipeline.
 - Still open for a usable puppet: stop its AI/hostility, play the remote player's animations,
   use a character that looks like the player, keep a target across reloads.
+
+### Run 3 (2026-10-27 16:30): stale build, FPS
+- The new puppet.rs (team write / re-pin / heading) did not reach the owner's disk: the file transfer
+  delivered the previous version (9175 bytes instead of 12490). Log confirms: stats lines had no
+  `repins`/`team_*` fields. Owner saw the same behaviour as run 2.
+- Owner: FPS fell to ~15 while the puppet was held. Log: game moved the puppet's height by
+  ~0.3-0.4 m against every write (Hero height on a slope = inside terrain), ~300 writes/s
+  (several per frame). Fix: keep the game-resolved height, max one write per 8 ms.
+- Re-sent with a read-back SHA-256 check of the file on the owner's disk.
