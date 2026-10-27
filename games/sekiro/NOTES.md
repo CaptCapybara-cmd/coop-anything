@@ -316,3 +316,14 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   run 9 may have come from fighting its run cycle); (b) real walking needs the puppet's own
   locomotion driven by a movement input (ChrManipulator / ChrCtrl) or a native play-animation call —
   not found yet.
+
+### Run 16 (2026-10-27 23:35): native warp every 50 ms
+- Owner: the puppet follows him smoothly with a running animation.
+- Log: ~16 warps/s, raw steps between, remote_fresh=1728, remote_stale=0, animation resets every
+  2 s. The puppet's animation switches between 405001/405003/405010 (its own walk/run family):
+  frequent native warps move it like real movement, and the game's locomotion picks the cycle.
+  Flicker seen in run 9 (33 ms) is gone now that its own animation is reset.
+- 50 ms is the new default.
+- Status: a network-driven, harmless, smoothly walking/running puppet that faces its direction of
+  travel. Still open: turning in place (no yaw in PlayerSnapshot), actions (attacks, deflects,
+  jumps), the player's appearance, Steam relay, a real two-PC test.

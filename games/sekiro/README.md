@@ -67,6 +67,13 @@ Nothing is released. All changes are local experiments on top of sekiro-coop `1e
 - Puppet v3 uses those: AI off for the puppet only, native warp every 500 ms (or when more than
   2 m off) plus small physics steps in between. Result on the owner's PC: the puppet follows
   smoothly 3 m ahead, does not attack, FPS normal, almost no flicker. Warping every frame flickered.
+- Driven by the network: the puppet follows the remote player's position from PlayerSnapshot
+  (tested with the peer simulator replaying the player's own path). Rotation: physics +0x70 holds
+  `[0, yaw, 0, 0]` (radians), yaw = atan2(-dx, -dz). With the native animation reset
+  (`0x9f4c60`) every 2 s and a native warp every 50 ms, the puppet walks and runs with its own
+  locomotion animations and faces its direction of travel.
+- Fixed in sekiro-coop: freed characters stayed in the registry and crashed the host's enemy
+  broadcast after a death/reload; the simulator now answers handshake retries.
 
 ## QA
 
@@ -86,7 +93,7 @@ Not playable yet.
 
 ## Next steps
 
-1. Drive the puppet from the remote player's network snapshot instead of a fixed offset.
+1. Send yaw (and the action/animation) in PlayerSnapshot so turning in place and attacks show.
 2. Find the animation playback native (same image analysis) so the puppet plays the remote
    player's animations; then make it look like the player (DS3-lineage remote player slots).
 3. Replace raw UDP with the Steam Spacewar relay (playbook/networking-steam-spacewar.md).
