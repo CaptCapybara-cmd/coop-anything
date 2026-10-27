@@ -194,3 +194,21 @@ handle at ChrIns+0x08 re-checked before each write.
   chr+0x18>+0x28 likely another path to the physics module (same +0x80).
 - Next: write position to chr+0x1050/+0x1060 as well, count per-copy reverts; scan rooted at the
   physics module object.
+
+### Run 8 (2026-10-27 ~16:57): write chr+0x1050/+0x1060 too; scan from physics module
+- Owner: FPS ~20 again; puppet "hard to attach", follows a few metres when walking straight, then
+  drops behind.
+- Per-copy reverts: chr+0x1050 reverted 2 times in 7056 writes (not maintained by the game, so
+  probably not a live copy); chr+0x1060 reverted together with the physics position every time
+  (1851 vs 1856). Overall revert rate ~26%, height resets 57.
+- During each 1 s write pause the puppet snapped back exactly to its spawn point
+  ([-198.86, -40.00, 243.24], same as run 6/7 scan A). Both scans therefore saw the home position.
+- Scan P (from physics module object, 3434 objects): phys+0x90, phys+0x1a0, phys+0x8>+0xe0,
+  phys+0x8>+0x50>+0x1a0, phys+0x8>+0x58>+0x5a0. phys+0x8 is a back-pointer to the ChrIns
+  (same suffixes as scan C).
+- Derived: something re-applies a stored home/target position to the physics module every frame.
+  Position-poking fights that system; the native move/warp path (or the game's remote-character
+  sync) is what needs finding. Per-launch trial and error through the owner is too slow for that.
+- Proposed next: dump the decrypted sekiro.exe image from memory (read-only, kept in local/,
+  never committed) and analyse it offline (disassembler) to find warp / animation / per-character
+  AI-disable natives and how DS3-lineage player slots are spawned.
