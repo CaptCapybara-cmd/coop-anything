@@ -256,3 +256,13 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   not to show. The puppet keeps playing its own animation (405010, occasionally 7020).
 - Puppet state: position solved. Open: drive it from the network snapshot of the remote player,
   play the remote player's animations, look like the player.
+
+### Run 11 (2026-10-27 21:27): puppet driven by the network (SOURCE=net) + peer-simulator --mirror
+- Failed: remote_fresh=0, remote_stale=1380. The simulator handshook, then sent nothing while waiting
+  for the DLL's first snapshots (sent only once in game); the DLL's grace expired after 9 s
+  ("peer grace expired" every frame, 3,700 log lines) and no snapshot ever arrived.
+- With no remote position the puppet step returned before logic-off/team write, so the pinned enemy
+  stayed hostile (team 6, logic on) and killed the owner. Then the game closed without an error
+  dialog after the death/reload; cause not in the log.
+- Fixes: simulator sends heartbeats while waiting; puppet is neutralised (logic off, team 2) before
+  any early return; grace log rate-limited.
