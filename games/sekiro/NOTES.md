@@ -462,3 +462,17 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Offline: STEP_LoadWait ends with `creator+0x1b8 = 0xa492e0(WorldChrMan, &creator+0x100)`, the
   created ChrIns. Fix: watch +0x1b8 after the request, check char id = NpcParam id, pin it and
   switch its logic off at once.
+
+### Run 26 (2026-10-28 02:20): spawned Owl as the puppet
+- First launch hung in me3-launcher (no game window, no mod log); after closing it, the second
+  launch worked. Cause unknown.
+- Log: created character pinned 48 ms after the request (char id 50600000, handle 268795904),
+  logic bit cleared, team 2; 7135 steps, 497 warps, 9 forced actions, remote_fresh=7136, stale 0.
+- Owner: the Owl became the puppet, follows, answers attacks with combo-like moves, reacts only
+  to attacks (only attacks are mapped). FPS fell to 25-30.
+- Unknown: the FPS cause. 65 height resets in the run (guess: the 5 m X offset puts the larger Owl
+  into geometry and physics fights the raw writes, as in runs 3-5).
+
+### Run 27 plan
+- Phased FPS test from the pin: A normal 0-40 s, B warps only 40-80 s, C no position writes
+  80-120 s, D normal + fast catalog (187 ids, 0.4 s) for the Owl while the owner stands.
