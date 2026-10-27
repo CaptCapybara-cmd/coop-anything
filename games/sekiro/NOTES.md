@@ -499,3 +499,10 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   (also 3093); dodge (3063) plays a two-hit combo instead: wrong id.
 - Run 30: each dodge plays the next candidate of 3061, 3064, 3060, 3065, 3066, 3068, 3069 (logged
   with its number) so the owner can name the right one.
+
+### Run 30 (2026-10-28 02:43): Owl dodge
+- Log: dodges 1-7 played 3061, 3064, 3060, 3065, 3066, 3068, 3069 in order. Owner: no. 2 (3064)
+  is a backstep with a firecracker throw. Dodge → 3064.
+- Also seen: a short block press gives 50203000 then 50002000 (parry) within ~0.5 s.
+- Owl puppet action map now: combo hits 1-4 → 3000/3001/3005/3006, block and parry → 3093,
+  dodge → 3064, jump → none (height follows). Owner-observed, no automated check.
