@@ -506,3 +506,9 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Also seen: a short block press gives 50203000 then 50002000 (parry) within ~0.5 s.
 - Owl puppet action map now: combo hits 1-4 → 3000/3001/3005/3006, block and parry → 3093,
   dodge → 3064, jump → none (height follows). Owner-observed, no automated check.
+
+### Run 31 plan: player-model puppet
+- `SEKIRO_COOP_SPAWN=0:auto` (model c0000): spawn with the first NpcParam row in 0-9999; if there
+  is none, log the low NpcParam ids and do not spawn. `SEKIRO_COOP_PUPPET_ANIM_PASSTHROUGH=1`:
+  the puppet plays the remote action ids as they are (6-8 digit ids only).
+- Unknown: whether c0000 can be created as an enemy/NPC character at all (crash risk; test copy).
