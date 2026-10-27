@@ -163,3 +163,11 @@ handle at ChrIns+0x08 re-checked before each write.
 - Keeping the game-resolved height made the puppet fall through the world: y −43 → −66 → −98 →
   … → −265 m, anim 10000/10001 near the end, then stale/despawn. Owner saw it "disappear".
 - Fix: keep the game's height only within [Hero−1 m, Hero+2 m], else Hero+0.2 m.
+
+### Run 5 (2026-10-27 16:43): height reset
+- Puppet held ~3 m ahead of the Hero for the whole session (2467 writes, 0 stale, 5 height resets,
+  FPS normal). Owner: first frame behind (heading starts as +X), then in front after moving.
+- Team byte stayed 2 (from 6), but the puppet kept attacking (anims 3000/3002) and missed because it
+  is re-placed every 8 ms. => Team 2 alone does not stop its AI.
+- Next: global debug flag all_no_update_ai (debug_flags+13) as a test aid; per-character AI
+  disable still to find.
