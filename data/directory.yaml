@@ -3403,6 +3403,35 @@
   - https://www.nexusmods.com/residentevil42023/mods/6539
   - https://www.kitguru.net/page/2/!https:/www.kitguru.net/gaming/matthew-wilson/resident-evil-4-remake-can-be-played-in-co-op-thanks-to-new-mod/
   checked: 2026-10-16
+- game: Resident Evil 2
+  year: 1998
+  engine: Capcom proprietary
+  project: re2coop
+  url: https://github.com/shoukyperry/re2coop
+  other_urls: []
+  kind: mod
+  status: prototype
+  coop_scope:
+    players_visible: yes
+    story: partial
+    enemies: no
+    world_state: partial
+    items: per-player
+  players: "2"
+  networking: steam-relay
+  open_source: yes
+  last_activity: 2026-10
+  qa: automated
+  notes: ASI plugin for the Steam re-release running Mulder's Steam Enhancement Pack (Sourcenext bio2.exe
+    + Classic REbirth). The other player is an NPC (Leon or Claire) spawned with the game's own em_set and
+    walked with plc_dest; the client follows the host through doors (also across stages); enemy kill flags
+    merged. Room enemies, items and story flags not synced. Steam Spacewar relay or direct UDP. Two-instance
+    bot suite 17/17 on UDP and on a Steam mock; real Steam checked on one account only. MIT license. Write-up in games/resident-evil-2-1998.
+  sources:
+  - https://github.com/shoukyperry/re2coop
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/resident-evil-2-1998
+  checked: '2026-10-27'
+  made_with_coop_anything: true
 - game: Resident Evil 2 (2019 remake)
   year: 2019
   engine: RE Engine
