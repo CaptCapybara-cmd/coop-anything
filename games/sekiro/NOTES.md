@@ -493,3 +493,9 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - All 13 ids played (puppet anim = id 300 ms later). Owner: no. 4 (3093) = block; no. 8 (3063)
   = dodge, not sure. No parry or plain jump named.
 - Run 29 map: block 50203000 and parry 50002000 → 3093, dodge 213300/213301 → 3063, jump none.
+
+### Run 29 (2026-10-28 02:38): Owl actions
+- Owner: attacks right; block hold plays its own block animation (3093); parry looks similar
+  (also 3093); dodge (3063) plays a two-hit combo instead: wrong id.
+- Run 30: each dodge plays the next candidate of 3061, 3064, 3060, 3065, 3066, 3068, 3069 (logged
+  with its number) so the owner can name the right one.
