@@ -120,3 +120,29 @@ SEKIRO_COOP_PEER_ADDR=127.0.0.1:28001. Loopback only.
   retry loop works, game unaffected.
 - => Reproduces the author's data-plane claims on this machine (QA level: one game client +
   simulator; not two real clients).
+
+## Session 1 (cont.): puppet probe v2 — remote-player rendering blocker, 2026-10-27
+
+Change (local branch `coop/puppet-probe` on top of 1ef5fa8, not published): new
+`crates/sekiro-coop-dll/src/puppet.rs`, enabled by SEKIRO_COOP_PUPPET_PROBE=1. Pins the nearest
+team-6 ChrIns within 12 m and writes Hero+(3,0,0) to its physics-module position
+(`ChrIns+0x1ff8 → +0x68 → +0x80`) from inside the SetFlag detour; every hop VirtualQuery-checked,
+handle at ChrIns+0x08 re-checked before each write.
+
+### Observations (log + owner watching the screen)
+- Pinned `char_id=10201000 handle=268484639 dist=11.9`.
+- Writes ran on ThreadId(3) (the SetFlag caller); the fallback ticker is ThreadId(2).
+- ~200 writes/s; the game changed the value between two of our writes ~8% of the time
+  (180 of 2273). Read-back position tracked Hero+3 m.
+- Owner: the enemy visibly teleported next to (behind) him and killed him. => Writing the physics
+  position from the game thread DOES move a character on screen.
+- After death/reload the old ChrIns pointer no longer held the handle; probe logged stale=1, dropped
+  the target, no crash. The same handle later reappeared in the registry with a new pointer.
+  No re-pin happened: registry (fed only by ApplyEffect) had no team-6 entry within 12 m.
+
+### Derived
+- docs/HANDOFF.md §3 conclusion "render path ignores physics-module writes" does not hold. Its
+  experiment wrote from the 60 Hz ticker thread and read back immediately. Position for a puppet
+  can be driven from a game-thread hook without the EMEVD/UXM pipeline.
+- Still open for a usable puppet: stop its AI/hostility, play the remote player's animations,
+  use a character that looks like the player, keep a target across reloads.
