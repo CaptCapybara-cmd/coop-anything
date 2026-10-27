@@ -5,9 +5,11 @@ owner's copy was not from a store). Phase 0 (triage) + phase 1 (research).
 
 ## Game identity (owner)
 
-- Store: unknown
-- Version: unknown (both known mods target 1.06, the latest Steam patch)
-- SHA-256 of sekiro.exe: unknown
+- Store: Steam (owner-reported; install has no emulator/uninstaller files)
+- Version: 1.06 (sekiro.exe ProductVersion 1.6.0.0)
+- SHA-256 of sekiro.exe: 637aca527538c0ec6e1f136c8ed66046e95dfbdbb1f51926e134d9916398b856 (68,005,144 bytes)
+- SHA-256 of steam_api64.dll: fc20547408a7c34f0bd4946a34c21aab48a75e3b98dce9e55969f486d37b212f
+- `pack.dat` (512 bytes, looks encrypted) in the game root: purpose unknown
 - Engine: FromSoftware proprietary, x64, Windows
 - Wanted mode: online (friends on their own PCs)
 
@@ -45,4 +47,4 @@ owner's copy was not from a store). Phase 0 (triage) + phase 1 (research).
 
 ## Unknown
 
-- Owner's store/version/exe hash. Whether Sekiro Online 2.05 still works on the current Steam client.
+Whether Sekiro Online 2.05 still works on the current Steam client.
