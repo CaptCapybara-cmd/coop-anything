@@ -213,3 +213,10 @@ Root causes found in bytecode:
 - Now: P2's activation opens the menu on P2's pad as P2; the choice is saved as P2Skin/P2Head in the mod config and the
   profile is put back to P1's choice; P2 is drawn with P2Skin/P2Head (getSkinInfo/getGlowColorsData/HeroHead.init
   run with the profile values swapped). The camera is put back on the shared view if a menu left it on P2.
+
+## Published (2026-10-27)
+- Mod repo: https://github.com/Osman-Mujic/DeadCellsLocalCoop (public, MIT), release v0.8.0 pre-release with
+  DeadCellsLocalCoop-0.8.0.zip (SHA-256 a92963d2...096e6; the DLL inside is the build installed on the owner's PC,
+  fa4e226c...). Draft PR to coop-anything: cranebeaker/coop-anything#237.
+- Build note: the MDK's props read an MSBuild property named DCCM_ROOT, so an environment variable with that name
+  breaks the build (every DCCM type "not found"). build.sh now takes DCCM_DIR.
