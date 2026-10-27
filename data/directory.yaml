@@ -7981,7 +7981,7 @@
   url: https://github.com/Shocklinks/autonauts-coop
   other_urls: []
   kind: mod
-  status: alpha
+  status: playable
   coop_scope:
     players_visible: 'yes'
     story: 'yes'
@@ -7993,14 +7993,15 @@
   open_source: 'yes'
   last_activity: 2026-10
   qa: automated
-  notes: BepInEx 5 plugin, host-authoritative mirror (joiner sims frozen, input replayed on the host). Steam
-    lobbies/invites plus direct IP (TCP 27015). Joiners build with undo, teach and program bots, and use building menus,
-    bot server, groups, catapult, spaceport and planning; characters are stored with the host's save while away.
-    Two-instance automated suite 101/101 (TCP) and 84/84 (Steam framing over UDP) plus a big-base stress test; the real
-    Steam lobby path between two PCs is untested. MIT. Write-up in games/autonauts.
+  notes: First beta (0.13.0). BepInEx 5 plugin, host-authoritative mirror (joiner sims frozen, input replayed on the
+    host). Host and join from the game's own menus (Esc > Host Multiplayer; main menu > Multiplayer), Steam lobbies and
+    invites plus direct IP (TCP 27015). Joiners build with undo, teach and program bots, use building menus, bot server,
+    groups, catapult, spaceport, planning and the Creative spawn menu; characters are stored with the host's save while
+    away. Automated suites with real game clients on one PC (2 players 116/116, 4 players 46/46, own late-game save
+    18/18); one two-PC Steam session over the internet by the author. MIT. Write-up in games/autonauts.
   sources:
   - https://github.com/Shocklinks/autonauts-coop
-  checked: '2026-10-21'
+  checked: '2026-10-26'
 - game: 'The Lord of the Rings: The Two Towers'
   year: 2002
   engine: Stormfront Fusion (Xbox), static recompilation to PC (The Two Towers Recompiled, xboxrecomp)
