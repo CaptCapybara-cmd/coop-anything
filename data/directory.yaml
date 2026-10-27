@@ -8695,3 +8695,61 @@
   - https://github.com/multiplayereverything/spooky-together/releases/tag/v0.2.11
   checked: '2026-10-27'
   made_with_coop_anything: true
+- game: Dead Cells
+  year: 2018
+  engine: Haxe / HashLink (Heaps)
+  project: Dead Cells Local Co-op
+  url: https://github.com/Osman-Mujic/DeadCellsLocalCoop
+  other_urls:
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/dead-cells
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: 'yes'
+    enemies: 'yes'
+    world_state: 'yes'
+    items: per-player
+  players: '2'
+  networking: lan
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: none
+  notes: Local co-op on one PC with two controllers (no networking), a code mod for Dead Cells Core Modding (DCCM)
+    35.14.1 on game version 35 (Steam). A second real hero with its own health, flasks, gear, mutations, scrolls and
+    HUD; shared camera on the players' midpoint; down and revive; per-player copies of loot, starting weapons and
+    reward-room choices; menus, forge, pause screen and outfit room work on player 2's pad; shared keys; doors, boss
+    arenas and teleporters bring the partner along, plus an L3 regroup. The owner played v0.6.0 from the start of a run
+    to the Bank; v0.7 and v0.8 (fixes for that run, controller picker, per-player outfits) are not yet played. No
+    automated tests. Player 2 has no visible head. MIT license. Write-up in games/dead-cells.
+  sources:
+  - https://github.com/Osman-Mujic/DeadCellsLocalCoop
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/dead-cells
+  checked: '2026-10-27'
+  made_with_coop_anything: true
+- game: Dead Cells
+  year: 2018
+  engine: Haxe / HashLink (Heaps)
+  project: DeadCellsMultiplayerMod
+  url: https://github.com/vaiserYT/DeadCellsMultiplayerMod
+  other_urls: []
+  kind: mod
+  status: alpha
+  coop_scope:
+    players_visible: 'yes'
+    story: unknown
+    enemies: unknown
+    world_state: unknown
+    items: unknown
+  players: unknown
+  networking: steam-relay
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: none
+  notes: In active development (584 commits, last one 2026-10-19 when checked); no release was tested by us.
+    Online host and client on DCCM (direct TCP port 1234 or Steam P2P). The remote player is shown as a ghost
+    entity (GhostKing, a KingSkin), not a second real hero; no local play. MIT. Its Steam Workshop item showed as
+    removed for violating Steam's guidelines when checked (reason not given), as did DCCM's own Workshop item.
+  sources:
+  - https://github.com/vaiserYT/DeadCellsMultiplayerMod
+  checked: '2026-10-23'
