@@ -247,3 +247,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Guess: vt[+0x698] resets per-warp state (`ChrIns+0x1b94 = 1.0f` when 0xa4a650 is true; render
   interpolation), so warping 30×/s flickers.
 - Next: hybrid — native warp every 500 ms or when >2 m off, raw physics steps every 8 ms between.
+
+### Run 10 (2026-10-27 21:15): hybrid move
+- Native warp every 500 ms or when >2 m off (108 warps in ~40 s), raw physics steps every 8 ms
+  between (2742). Distance to the Hero held at 3.0-3.3 m, stale=0, logic bit stayed cleared
+  (`[ChrIns+0x50]+0x190 = 2`), no attacks. Owner: moves smoothly, flicker "practically gone", FPS normal.
+- Between warps the game still moves it ~60% of the time (overwritten 1689/2850), but small enough
+  not to show. The puppet keeps playing its own animation (405010, occasionally 7020).
+- Puppet state: position solved. Open: drive it from the network snapshot of the remote player,
+  play the remote player's animations, look like the player.

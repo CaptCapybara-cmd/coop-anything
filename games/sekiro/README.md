@@ -60,6 +60,13 @@ Nothing is released. All changes are local experiments on top of sekiro-coop `1e
      fights the engine; a puppet needs the native move/warp, animation and per-character AI calls.
   4. Writing the player's height into slopes made physics push the puppet out every frame
      (FPS fell to ~15); keeping the game's own height let it fall through the world.
+- Offline analysis of a 1.06 memory image (kept local) found the script command natives
+  (`EventEntityCommandUtil::ChrCmd_*`): per-character EnableLogic (bit 0 of `[ChrIns+0x50]+0x190`),
+  SetDisableGravity, SetDisableMapHit and the native warp `ChrIns->vt[+0x6A0](pos, rot, 1, 0)`.
+  RVAs are in [NOTES.md](NOTES.md).
+- Puppet v3 uses those: AI off for the puppet only, native warp every 500 ms (or when more than
+  2 m off) plus small physics steps in between. Result on the owner's PC: the puppet follows
+  smoothly 3 m ahead, does not attack, FPS normal, almost no flicker. Warping every frame flickered.
 
 ## QA
 
@@ -79,9 +86,8 @@ Not playable yet.
 
 ## Next steps
 
-1. Analyse a decrypted in-memory image of 1.06 offline to find the native warp/move, animation
-   playback and per-character AI-disable functions, and how the DS3-lineage engine spawns remote
-   player characters (what Sekiro Online appears to use).
-2. Build the puppet on those calls instead of memory writes.
+1. Drive the puppet from the remote player's network snapshot instead of a fixed offset.
+2. Find the animation playback native (same image analysis) so the puppet plays the remote
+   player's animations; then make it look like the player (DS3-lineage remote player slots).
 3. Replace raw UDP with the Steam Spacewar relay (playbook/networking-steam-spacewar.md).
 4. Two-client bot tests (playbook/automated-qa.md).
