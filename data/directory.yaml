@@ -4803,6 +4803,35 @@
   - https://github.com/NightfallTogether/Nightfall-Together-Batman-Arkham-Knight-Multiplayer
   - https://www.nexusmods.com/batmanarkhamknight/mods/2505
   checked: 2026-10-16
+- game: 'Batman: Arkham Knight'
+  year: 2015
+  engine: Unreal Engine 3
+  project: Arkham Knight Co-op (SplitScreen)
+  url: https://www.nexusmods.com/batmanarkhamknight/mods/3609
+  other_urls:
+  - https://github.com/Team-BmSDK/BmSDK-AK
+  kind: mod
+  status: partial
+  coop_scope:
+    story: partial
+    enemies: true
+    world_state: true
+    items: unknown
+  players: 2-4
+  networking: lan
+  open_source: unknown
+  last_activity: 2026-10
+  qa: none
+  notes: Local split-screen on one PC (Steam version), each player on their own controller with their own camera, HUD
+    and gadgets. Player 1 is Batman and the others pick Robin, Nightwing, Catwoman, Azrael, Batgirl, Harley Quinn
+    or Red Hood (some need DLC). Works in the story, new games and AR challenges. Version 1.0.0 by Arysr and Bitcrusader,
+    uploaded 2026-10-27. The author says 2 players is the supported setup (3 and 4 are experimental), some scripted
+    story sequences misbehave, crashes still happen and HUD glitches remain. Runs on BmSDK-AK, the MIT-licensed
+    C# scripting platform for Arkham Knight by Team BmSDK.
+  sources:
+  - https://www.nexusmods.com/batmanarkhamknight/mods/3609
+  - https://github.com/Team-BmSDK/BmSDK-AK
+  checked: 2026-10-27
 - game: 'S.T.A.L.K.E.R. 2: Heart of Chornobyl'
   year: 2024
   engine: Unreal Engine 5
