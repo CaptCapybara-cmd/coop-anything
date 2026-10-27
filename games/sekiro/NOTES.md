@@ -341,3 +341,11 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Guess: a periodic warp after the reset reads as movement and restarts the cycle.
 - Change: no periodic warps while the target stands (only to fix >2 m), and follow-up resets every
   400 ms for 1.7 s after a stop.
+
+### Run 19 (2026-10-27 23:49): no simulator
+- Owner: the puppet froze in place in its run animation.
+- Log: remote_fresh=0 for the whole run; the DLL got os error 10054 on 75 handshake attempts; the
+  simulator log ended at the previous run (it never started this time; cause unknown, likely a
+  leftover process/log handle). The stop logic never ran because no data came.
+- Fixes: reset the puppet's animation when network data stops; launch script deletes old logs,
+  starts the simulator, checks it is running, and refuses to start the game if it is not.
