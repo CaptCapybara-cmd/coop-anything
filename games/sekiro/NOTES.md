@@ -327,3 +327,11 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Status: a network-driven, harmless, smoothly walking/running puppet that faces its direction of
   travel. Still open: turning in place (no yaw in PlayerSnapshot), actions (attacks, deflects,
   jumps), the player's appearance, Steam relay, a real two-PC test.
+
+### Run 17 (2026-10-27 23:42): yaw in PlayerSnapshot
+- PlayerSnapshot gained `yaw: f32` (Hero physics +0x70 element 1); the puppet turns to the remote
+  yaw (fallback: direction of movement); the simulator mirrors it. Wire format changed: DLL and
+  simulator are rebuilt together.
+- Owner: the puppet turns with him, including in place. When he stops, it sometimes keeps its run
+  animation (the reset only ran every 2 s).
+- Fix: reset the animation as soon as the target has not moved 5 cm for 200 ms.
