@@ -335,3 +335,9 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Owner: the puppet turns with him, including in place. When he stops, it sometimes keeps its run
   animation (the reset only ran every 2 s).
 - Fix: reset the animation as soon as the target has not moved 5 cm for 200 ms.
+
+### Run 18 (2026-10-27 23:47): stop reset
+- Owner: mostly stops correctly; occasionally the run animation stays.
+- Guess: a periodic warp after the reset reads as movement and restarts the cycle.
+- Change: no periodic warps while the target stands (only to fix >2 m), and follow-up resets every
+  400 ms for 1.7 s after a stop.
