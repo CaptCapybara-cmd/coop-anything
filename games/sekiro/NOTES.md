@@ -418,3 +418,15 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - PlayerSnapshot gains `action_id` + `action_seq`: any +0x34 slot changing to a non-zero id is a
   new action. Puppet map: combo hit 1/2/3/4+ → 3000/3001/3005/3006, jump and jump attack → 3002,
   dodge 213300/213301 → 3004; block/parry → nothing (no counterpart found). Wire format changed.
+
+### Run 24 (2026-10-28 ~01:58): actions over the network
+- Owner: the puppet's attacks follow his combo rhythm; on dodge it swings in an arc (3004); on
+  jump it does a plain strike (3002); no reaction to block (none mapped).
+- Log: combo hits 50300000 → 50300010 → 50300020 → 50300030 arrived in order and each was played
+  (3000, 3001, 3005, 3006; puppet anim = wanted id 300 ms later every time). Other action-ring
+  ids seen: 600, 401, 432, 433, 443, 11 (moving/turning, guess), 201050 (jump variant).
+- Bug: one action is written into 4-5 slots over ~100 ms, so action_seq rose 4-5 times per
+  action and the puppet re-forced the same animation that often. Fix: count an id once unless
+  300 ms passed. Jump/dodge mapping removed (no lookalike on c1020).
+- Derived: an enemy puppet can only show the enemy's own moves. Exact moves need a puppet that
+  uses the player's animation set (c0000), so the remote ids could be played as they are.
