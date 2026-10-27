@@ -171,3 +171,15 @@ handle at ChrIns+0x08 re-checked before each write.
   is re-placed every 8 ms. => Team 2 alone does not stop its AI.
 - Next: global debug flag all_no_update_ai (debug_flags+13) as a test aid; per-character AI
   disable still to find.
+
+### Run 6 (2026-10-27 16:47): global AI freeze (debug_flags+13: 0 → 1)
+- Owner: puppet no longer attacks; it has no animation; it follows only when the owner circles near
+  it, and stays behind when he walks straight ahead.
+- Log: even with all AI frozen the game reverted ~80% of our writes (2530/3147). Distance to the
+  Hero mostly 3.0 m, sometimes 6-9 m while walking straight.
+- Derived: the reverting copy is not the AI; most likely the physics engine's own copy (character
+  proxy) syncing back into the physics module each frame. Writes stick only when they land at the
+  right point in the frame; big jumps are visible, small per-frame steps are lost.
+- Next: read-only mirror scan from the ChrIns (BFS through pointer fields, depth 3, ≤4000 objects,
+  VirtualQuery-checked) for every float triple equal to the position, twice 10 s apart, with writes
+  paused 1 s before each scan.
