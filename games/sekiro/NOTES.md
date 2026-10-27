@@ -349,3 +349,8 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   leftover process/log handle). The stop logic never ran because no data came.
 - Fixes: reset the puppet's animation when network data stops; launch script deletes old logs,
   starts the simulator, checks it is running, and refuses to start the game if it is not.
+
+### Run 20 (2026-10-27 23:56): stop handling confirmed
+- Launch script reported the simulator running before the game started.
+- Owner: "everything works as it should" — the puppet follows, turns with him, and drops the run
+  animation when he stops. One run, owner-observed; no automated check.

@@ -93,7 +93,8 @@ Not playable yet.
 
 ## Next steps
 
-1. Send yaw (and the action/animation) in PlayerSnapshot so turning in place and attacks show.
+1. Send the action/animation in PlayerSnapshot so attacks, deflects and jumps show (yaw is done:
+   the puppet turns with the remote player, including in place, and stops its run cycle on stop).
 2. Find the animation playback native (same image analysis) so the puppet plays the remote
    player's animations; then make it look like the player (DS3-lineage remote player slots).
 3. Replace raw UDP with the Steam Spacewar relay (playbook/networking-steam-spacewar.md).
