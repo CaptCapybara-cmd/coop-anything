@@ -839,3 +839,13 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - `ModuleSyncBehaviorTestStep` (debug test: STEP_Init 0xaeaa40, Update 0xaead70, Finish 0xaea860)
   exercises SprjChrBehaviorSyncModule; not followed further.
 - Run 55: hook 0x9f3430 (byte-checked) to return true for the clone (others unchanged).
+
+### Run 55 (2026-10-28 04:58): clone as "local player"
+- Hook installed; 0x9f3430 answered true for the clone 32,585 times; no visible side effects
+  (camera, HUD, owner's control fine). The clone still did not walk.
+- Clone manipulator update wrapper ran only 124 times in the run (runs 41-43: ~800-1400), so the
+  clone's ChrCtrl update may run rarely (update LOD / throttling?) — a new lead: if its
+  character update is throttled, behavior/locomotion would not advance.
+- run-wolf-local.cmd has the hook off again.
+- Next: check how often the clone's ChrIns update / behavior update runs versus the Hero's
+  (count calls per second), and what decides a character's update rate.
