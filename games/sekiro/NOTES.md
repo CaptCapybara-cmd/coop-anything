@@ -689,3 +689,8 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   while the corrections pull it to the delayed remote position, hence the teleports.
 - Next: find where those sub-objects read the pad (or which method fills the manipulator
   fields each frame) and feed the remote state there for the clone only.
+- ChrCtrl update (0x7dee05): manipulator = ChrCtrl+0x358 or +0x120; if vt[+0xf0]() (or logic
+  bits) → vt[+0x48](this, dt, ChrCtrl, 0), else vt[+0x50](this, dt, ChrCtrl). Pad overrides:
+  0x7ef120 / 0x7ef300. These are the per-frame updates.
+- Run 41: clone vtable wraps slots 0x48 and 0x50: call the original, then overwrite the copy
+  ranges with the latest remote ManipState (or clear when none is fresh).
