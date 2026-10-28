@@ -809,3 +809,13 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   0xa078a0, 0xa06180 via 0xa05ce0 ← 0xa080f0/0xa08430/0xa50120) with the net-player path we use
   (0xa05a80), and find where the player's behavior graph (c0000 hkx) is instantiated.
   Do searches like this one on the ticker thread, never the game thread.
+
+### Offline (04:50): player creation paths are the same
+- Local player: 0xa493d0 (WorldChrMan, sets +0x88) → 0xa078a0 (slot 0) → 0xa058a0, data built by
+  0x7f8730: {id, kind 1 (Pad), [GameDataMan]+8, +0x10 0, +0x18 [0x3d67408]+0x31e0, +0x20 0} →
+  PlayerIns ctor 0xa217a0 → vt[+0x6e8](chr, 0x2a0b0c0). Our clone gets the same data shape
+  (+0x18 copied from Hero+0x21f8) through 0xa49460. Called from the game-start routine 0xa73430.
+- Behavior classes (RTTI): SprjChrBehaviorModule 0x2a790a8, SprjChrBehaviorSyncModule 0x2a7a7f8,
+  SprjChrBehaviorScriptModule 0x2a7a3b8, SprjChrBehaviorDataModule 0x2a76c20. Havok
+  hkbCharacter ctor callers lead to 0x100c570 (← 0xffb350, 0xffb8f0).
+- Run 54: log Hero vs clone module bags by vtable and the behavior module's first fields.
