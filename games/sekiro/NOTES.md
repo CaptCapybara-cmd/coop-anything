@@ -668,3 +668,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   clears its input. Simulator mirrors ManipState with the same 500 ms delay. Position: input
   drives the clone; a native warp to the remote position only when > 1.5 m off (or > 3 m in
   height), at most every 250 ms. Wire format changed (DLL and simulator rebuilt together).
+
+### Run 39 (2026-10-28 03:42): no session, clone at the origin
+- The simulator process was alive (tasklist) but wrote nothing; the DLL got 10054 on every session
+  attempt, so no snapshots or ManipState arrived (remote_fresh 0, manip rx 0).
+- The clone was created at the world origin (x 0, z 0) and, with no remote position, never moved
+  next to the Hero; its manipulator slot 0 was never called (clone_updates 0). Guess: far
+  characters are not updated.
+- Fixes: in correction mode warp the clone beside the Hero once; launch scripts wait until the
+  simulator's log shows "peer-simulator starting" (up to 30 s) before starting the game.
