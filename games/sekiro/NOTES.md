@@ -777,3 +777,14 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   variable value storage at runtime (behavior module → hkbCharacter → behavior graph →
   variable values), compare Hero vs clone while the Hero runs, then send those few variables
   and write them on the clone each frame. No run done yet.
+
+### Run 50 (2026-10-28 04:34): behavior variable scan
+- Pointer walk from Hero modules 0x10/0x28/0x58, depth 3, 4001 objects; floats 0 when standing
+  and 0.5-3 when running: 300 hits (capped). Clone value 0 at the same path, e.g.
+  `[[[bag+0x28]+0x20]+0x140]+0x344` Hero 2.0 (MoveSpeedLevel-like), `...+0x128]+0x5c` 0.5,
+  `[[[bag+0x58]+0x30]+0x188]` several 2.41, `[[[bag+0x58]+0x160]+0x3d8]+0x60/+0x68`
+  -0.68/0.73 (a direction?).
+- Guess: `[bag+0x28]+0x20` is the Havok behavior character; +0x140/+0x148 an hkArray of variable
+  values (data, size).
+- Run 51: in the clone's wrapped manipulator update, copy the Hero's whole variable array into
+  the clone's (min of both sizes); log both sizes.
