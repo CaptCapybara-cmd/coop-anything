@@ -634,3 +634,9 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - In progress: Wolf-looking puppet via the game's net-player path (PlayerIns created, stable
   without post-steps, no animations yet).
 - Not started: Steam relay, two-PC test, automated QA.
+
+### Run 37 plan: PlayerIns with a PadManipulator
+- run-wolf.cmd: manipulator kind 1 (PadManipulator, ctor 0x7ed3a0), no post-create steps, no input
+  copy, NOPOS (one warp beside the Hero). Question: does a second PlayerIns with its own
+  PadManipulator move from the local controller? If yes, the next step is to feed that
+  manipulator's pad read with the remote player's input instead.
