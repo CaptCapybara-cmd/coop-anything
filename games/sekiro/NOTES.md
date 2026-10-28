@@ -788,3 +788,5 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   values (data, size).
 - Run 51: in the clone's wrapped manipulator update, copy the Hero's whole variable array into
   the clone's (min of both sizes); log both sizes.
+- Run 51: no copy happened (bvar_copies 0): the +0x148 size check rejected the array. Run 52:
+  copy a fixed 0x400 bytes from `[X+0x140]` (what the scan read) and log the header at X+0x148.
