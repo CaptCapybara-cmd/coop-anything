@@ -654,3 +654,17 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   that copies the Hero manipulator's processed fields (+0x10..0x300, 0x310..0x340, 0x360..0x410,
   0x420..0x428, 0x438..0x450) instead of reading the pad. Expect: owner keeps control, clone
   mirrors him.
+
+### Run 38 (2026-10-28 03:38): clone mirrors the owner locally
+- Owner: his character obeys him again, and the clone repeats his moves. Holding block: the
+  clone drops back to its normal stance after a couple of seconds (guess: hold state lives in
+  the PadManipulator sub-objects +0x350/+0x358, which are not copied).
+- => A Wolf-looking second player that plays the game's own moves works locally:
+  PlayerIns via 0xa49460 + PadManipulator (kind 1) + per-object vtable swap of slot 0.
+
+### Run 39 plan: the same over the network
+- New packet `ManipState { frame, bytes }` (Hero PadManipulator fields in the copy ranges,
+  ~1 KB, every tick). Clone slot 0 copies the latest received state (< 500 ms old), else
+  clears its input. Simulator mirrors ManipState with the same 500 ms delay. Position: input
+  drives the clone; a native warp to the remote position only when > 1.5 m off (or > 3 m in
+  height), at most every 250 ms. Wire format changed (DLL and simulator rebuilt together).
