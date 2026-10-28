@@ -677,3 +677,15 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   characters are not updated.
 - Fixes: in correction mode warp the clone beside the Hero once; launch scripts wait until the
   simulator's log shows "peer-simulator starting" (up to 30 s) before starting the game.
+
+### Run 40 (2026-10-28 03:46): clone visible, animations, but teleports
+- Session up; ManipState received 367 times; 25 position corrections; clone_updates = 0 and
+  remote_manip_used = 0: our replacement for Pad vtable slot 0 was never called.
+- Owner: the clone repeated his animations but teleported instead of walking.
+- Derived (revises run 38): the clone's moves do not come from our copy. Pad vtable slot 0
+  (0x7f2210: return global 0x3d5b4a8, else 0x7ef930) looks like a device getter, not the
+  per-frame update. The clone most likely reads the local pad itself through its
+  PadManipulator sub-objects (+0x350, ctor 0x8d4780; +0x358, ctor 0x8d45a0), so it acts at once
+  while the corrections pull it to the delayed remote position, hence the teleports.
+- Next: find where those sub-objects read the pad (or which method fills the manipulator
+  fields each frame) and feed the remote state there for the clone only.
