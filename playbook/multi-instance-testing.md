@@ -60,6 +60,7 @@ Many games refuse to start a second copy. Two mechanisms are common:
 |---|---|---|
 | Named mutex | The game calls `CreateMutex` with a fixed name at start up and exits if the name already exists (`ERROR_ALREADY_EXISTS`) | The second copy shows an error box or closes within a second or two, with a non-zero exit code |
 | Window class or title | The game calls `FindWindow` for its own class or title and exits or activates the old window when it finds one | Same, or the first copy's window jumps to the front |
+| Unity player setting | `<Game>_Data/boot.config` has a `single-instance=` line, and the Unity player exits when a copy is already running. Remove the line in the test copies only; it is a text file, not the exe (Graveyard Keeper, Unity 2020.3) | The second copy closes at once |
 
 How to tell which one: watch the second copy with Process Monitor or API Monitor for `CreateMutex` and
 `FindWindow`, or read what the game logs on the way out. The launcher in `gamepool` reports a copy that exits
@@ -134,6 +135,10 @@ Copies the owner never looks at should cost little and never take the screen:
   corrupt on load; no audio can stall a test that waits for a voice line to end. Keep those opt-in.
 - Use the game's own logs and in-game screenshots as evidence, not desktop capture, which grabs whatever else is
   on the owner's screen.
+- Check that a minimized start does not stall the engine. A modded Unreal Engine 3 client (OpenOL) started from a
+  background shell opened minimized and stopped in engine init right after the audio middleware line (CPU idle, log
+  silent for minutes) until its window was minimized and restored once. Wait for that log line, restore the window once
+  (`ShowWindow` minimize then restore), and keep waking it until the client connects.
 
 `gamepool lowcost` applies a profile from the config to the private settings only.
 
