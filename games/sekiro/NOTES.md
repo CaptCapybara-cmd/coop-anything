@@ -750,3 +750,15 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
     +0x414..+0x5f4 set to 1 for the Hero, 0 for the clone (a per-action table).
   - Modules +0x1ff8: differences in modules 0x8-0x70 (most in module 0x10 = TimeAct, 66).
 - Run 48: copy ChrIns +0x78, +0x128, +0x10ec Hero → clone once (15 s after the pin), log old/new.
+
+### Runs 48-49 (2026-10-28 04:20-04:26)
+- Run 48: ChrIns +0x78, +0x128, +0x10ec copied Hero → clone: still no walking.
+- Run 49: owner's main save (his Steam-account S0000.sl2) copied over coop-test.sl2 (test save
+  backed up as coop-test.sl2.bak-20261028; S0000.sl2 only read). Still no walking.
+- Summary: the clone PlayerIns plays actions (attacks, block) and moves its position, but never
+  enters its locomotion animations, with any input source, init type 0/1, either save.
+  Guess: the behavior variables that select walk/run (move speed level etc.) are written by a
+  local-player-only path, or come from the network path (NetworkManipulator) for remote players.
+- Next (offline, no runs): find the writer of the player's locomotion behavior variables and
+  its condition; compare with NetworkManipulator overrides (0x29d4530: slots 0x48, 0xb0,
+  0xc0-0xd0, 0xf0, 0x100-0x130).
