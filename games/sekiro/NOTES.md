@@ -694,3 +694,11 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   0x7ef120 / 0x7ef300. These are the per-frame updates.
 - Run 41: clone vtable wraps slots 0x48 and 0x50: call the original, then overwrite the copy
   ranges with the latest remote ManipState (or clear when none is fresh).
+
+### Run 41 (2026-10-28 03:50): update wrappers work, still teleports
+- Log: clone_upd_calls = remote_manip_used (1432 by the end): the wrapped update ran and applied
+  the remote state each time (slot 0 still never called). ManipState arrived ~12/s (the
+  simulator replays at most one due entry per tick). 31 warps in ~40 s (> 1.5 m off).
+- Owner: the clone still teleports.
+- Run 42: below 4 m, nudge the raw position 4 % of the error per step (when > 0.3 m); native warp
+  only beyond 4 m or 3 m in height; log the clone's distance to the remote position.
