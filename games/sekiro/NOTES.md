@@ -830,3 +830,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - So the clone does have a behavior module; run 53's "no hkbVariableValueSet" was likely the
   search cap. Locomotion is blocked elsewhere: candidates are the missing local-player modules
   or a local-player check in the HKS env functions used for movement.
+
+### Offline (05:00): IsLocalPlayer
+- The local-only modules are created in 0xa34c90 (PlayerIns module setup, called from 0xa39750)
+  behind `0x9f3430(chr)` = `[WorldChrMan]+0x88 == chr` (IsLocalPlayer): HitWall via 0xbd9160
+  (slot 0x24 → bag+0x120), WireActionHitChange via 0xbd9890 (0x27 → +0x138), Docking via
+  0xbd8da0. 0x9f3430 has ~260 call sites; PlayerIns vt+0x90 (0xa23790) also calls it.
+- `ModuleSyncBehaviorTestStep` (debug test: STEP_Init 0xaeaa40, Update 0xaead70, Finish 0xaea860)
+  exercises SprjChrBehaviorSyncModule; not followed further.
+- Run 55: hook 0x9f3430 (byte-checked) to return true for the clone (others unchanged).
