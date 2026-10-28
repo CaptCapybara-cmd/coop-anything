@@ -1,4 +1,4 @@
-# Middle-earth: Shadow of War: agent notes
+# Middle-earth: Shadow of War: research notes
 
 Raw notes, newest phase last. Paths use `<game dir>`. Goal: online shared-world co-op
 of the main campaign (two players in one Mordor, one Nemesis world).
@@ -168,10 +168,9 @@ Archive.org, Steam guides.
 
 ### Next steps
 
-1. Set up `gh` so hub issues/PRs can be checked; open a "claim a game" issue.
-2. Copy the Steam install to a test folder; record exe hash, version, Denuvo
-   presence in `local/identity.md` and here.
-3. Phase 3: build the mod loader + a logging plugin on the test copy; read
+1. Copy the Steam install to a test folder; record exe hash, version and Denuvo
+   presence here.
+2. Phase 3: build the mod loader + a logging plugin on the test copy; read
    SystematicSkid's save editor and freecam sources for class layouts; map the Nemesis
    structures and the save path.
 
@@ -264,7 +263,7 @@ Archive.org, Steam guides.
 ### Isolation plan (nothing launched until every step passes)
 
 1. **Backup with a hash manifest** of `%LOCALAPPDATA%\WB Games\Shadow of War` and
-   `userdata\<id>\356190` into `local/backups/<date>/` (read from the real folders,
+   `userdata\<id>\356190` into a private backup folder (read from the real folders,
    write only into the workspace).
 2. **Manual step in the Steam client:** turn off Steam Cloud for Shadow of War
    (game Properties > General) for the testing period. Belt and braces with step 3.
@@ -302,7 +301,7 @@ Archive.org, Steam guides.
 ## Session 2026-10-20 d: isolation steps 1 and 2 done
 
 - Step 1 (backup): `%LOCALAPPDATA%\WB Games\Shadow of War` (28 files) and
-  `userdata\<id>\356190` (2 files) copied into `local/backups/2026-10-20/`, with
+  `userdata\<id>\356190` (2 files) copied into a private backup folder, with
   `MANIFEST.sha256` (SHA-256, size, path). Every backup file was hashed against its
   original: 30 files, 0 mismatches.
 - Observation: the main save, save slot 1 and the Steam Cloud save have the same SHA-256,
@@ -313,8 +312,8 @@ Archive.org, Steam guides.
 
 ## Session 2026-10-20 e: guard DLL built and tested offline (isolation step 3)
 
-Code lives in its own repo (`sow-coop`, local only for now, not pushed); this hub gets
-the write-up only.
+The guard's code and its offline tests are not published; this hub gets the write-up
+only, so test results are described, not claimed.
 
 ### Built
 
@@ -340,8 +339,7 @@ the write-up only.
 
 ### Tested (offline, no game process)
 
-- Suite `test_guard.exe run`: **RESULT: PASS (20 of 20 cases passed)**, 2026-10-20.
-  Each case builds a fake user tree, loads the DLL into a child process in test mode
+- Offline tests: each case builds a fake user tree, loads the DLL into a child process in test mode
   (real user paths refused) and checks disk state + exit code. Covers: redirected
   write/read/attributes/listing; forward slashes, lower case, `\?\`, cwd-relative and
   directory-handle-relative `NtCreateFile`; rename/delete/mkdir in the profile; Steam
@@ -349,15 +347,14 @@ the write-up only.
   rename-into all terminate with `0xC0DE0010` and leave the tree unchanged; sockets
   denied/allowed by flag; the four start-up refusals; all 73 forwarders resolve to the
   original; own SHA-256 matches the exe hash above.
-- First run had 19/20: the forwarder test looked for `bink2w64_.dll` before resolving any
+- One case failed at first: the forwarder test looked for `bink2w64_.dll` before resolving any
   export. Forwarders load their target on first resolution (in the game, the exe's
   static `BinkGoto` import does that). Test fixed, not the DLL.
-- Negative control `test_guard.exe mutant` (redirect and guard compiled out):
-  **5 of 5 dependent cases fail as they should**.
+- A negative-control build (redirect and guard compiled out) fails the dependent cases.
 - Dry run of the staged game-mode config inside the test copy with a non-game exe: the
   DLL parsed the config and refused with `0xC0DE0003 unknown exe`.
 - Real saves and Steam userdata re-checked against the backup manifest after all of
-  this: 30/30 unchanged.
+  this: unchanged.
 
 ### Observed in passing
 
@@ -387,7 +384,7 @@ the write-up only.
 
 ## Session 2026-10-20 f: first guarded launch of the test copy
 
-Launched with `launch-sow-a.ps1` (Steam running, backup check passed first), timeout 300 s.
+Launched (Steam running, backup check passed first), timeout 300 s.
 
 ### Observations
 
@@ -399,12 +396,12 @@ Launched with `launch-sow-a.ps1` (Steam running, backup check passed first), tim
   exited is unknown (nobody watched the window; possibly the network denial).
 - Guard log, 71 lines: 20 socket attempts denied (`\Device\Afd\Endpoint`), 32 redirects,
   0 protected-path hits, 0 watched writes, no FATAL.
-- Order seen: sockets denied and Steam userdata `<id>\356190\175823492` probed during the
+- Order seen: sockets denied and Steam userdata `<id>\356190\<id>` probed during the
   first ~1.4 s; then a ~68 s gap with nothing logged; then the game's own boot: probes
   `LocalAppData\WB Games\Shadow of War\` and `Documents\WB Games\Shadow of War\`,
   creates a `{25FFEBFB-B407-4789-ABEB-43655FEB78C6}` file (write test?), opens
   `render.lasterror`, creates `CloudStorage\`, reads and rewrites `render.cfg` several
-  times, writes `gpu.nfo`, writes Steam userdata `356190\175823492` (1,178 bytes). All
+  times, writes `gpu.nfo`, writes Steam userdata `356190\<id>` (1,178 bytes). All
   of it landed in the sandbox profile.
 - The game opened a window: it saved `WindowWidth 960`, `WindowHeight 516`,
   `ScreenX 480`, `ScreenY 258` into the sandbox `render.cfg`.
@@ -451,20 +448,19 @@ Launched with `launch-sow-a.ps1` (Steam running, backup check passed first), tim
   The six real saves and Steam userdata are byte-identical to the backup. So the game
   did not open the save files in this process. Unknown what the menu showed and where
   it came from (Steam stats or achievements over Steam's IPC are a guess).
-- `steam-userdata\356190\175823492` is a hex-text blob (1,178 bytes) that differs from
+- `steam-userdata\356190\<id>` is a hex-text blob (1,178 bytes) that differs from
   the real copy in 1,061 bytes: regenerated, not copied. Not a save.
 
 ### Consequences
 
 - Denying socket creation looks like a bug to the game, not like being offline. Every
   launch would stop at that dialog, which rules out unattended bot tests, and it
-  invites reports to WB about modded runs (contacting anyone needs approval under the
-  hub rules anyway). Next guard version: allow sockets, fail outbound
+  invites reports to WB about modded runs. Next guard version: allow sockets, fail outbound
   connects and DNS the way an offline PC does, and see whether the game then starts
   offline without the dialog. Unknown whether it needs WB's server at all to start.
 - Still open: whether Steam serves `ISteamRemoteStorage` file reads/writes from inside
   the game process (where the guard redirects them; the in-process write of
-  `175823492` suggests yes) or from `steam.exe` (where it can't).
+  `<id>` suggests yes) or from `steam.exe` (where it can't).
 - Decided: keep the NVIDIA-rewritten `render.cfg` (display settings get fixed in the
   game). The backup check now reports `render.cfg` and `gpu.nfo` changes as info only;
   any change to saves or Steam userdata still fails it and blocks a launch.
@@ -489,11 +485,11 @@ dialog that needed a human. Goal: look like an unplugged PC instead.
   unparseable) destination return `STATUS_NETWORK_UNREACHABLE` without reaching the
   driver. Winsock then reports `WSAENETUNREACH` (10051); WinHTTP reports
   `ERROR_WINHTTP_CANNOT_CONNECT` (12029) after 0 ms. Loopback passes.
-- Suite: **RESULT: PASS (21 of 21 cases passed)**. New case `network_offline`: sockets
+- New offline case `network_offline`: sockets
   create; TCP connect, ConnectEx, UDP sendto, UDP connect+send to 192.0.2.1 and TCP,
   ConnectEx, sendto to 2001:db8::1 all give 10051; WinHTTP to 192.0.2.1 gives 12029 in
   under 2 s; TCP and ConnectEx to a 127.0.0.1 listener, TCP to a ::1 listener and a UDP
-  datagram over 127.0.0.1 all work. Mutant build: **6 of 6** dependent cases caught.
+  datagram over 127.0.0.1 all work.
 - One false failure on the way: once the guard was staged in the test copy,
   `sow-a\x64\bink2w64.dll` *is* the guard, and passing it as the "original" made the
   proxy forward to a second copy of itself. That copy found the stubs already hooked
@@ -522,7 +518,7 @@ Overlay` processes were still running. The game window was watched by hand.
   exit 0 (closed by hand from the main menu, see below).
 - Guard log, 48 lines: 24 redirects, 4 offline refusals, 0 protected hits, 0 watched
   writes, no unparsed network request, no FATAL.
-- Timeline: +0.7 s Steam userdata `356190\175823492` opened (read, redirected); +3.5 s
+- Timeline: +0.7 s Steam userdata `356190\<id>` opened (read, redirected); +3.5 s
   the game's own boot starts (save-dir probes, write test file, `render.lasterror`,
   `CloudStorage\`); +3.8-8.3 s `render.cfg` read/written, `gpu.nfo` read; +46.5 s
   `render.cfg` written again; **+46.7 s two HTTPS connects refused, to
@@ -599,17 +595,17 @@ so we learn from it and do not copy code)
   or stripping of Denuvo/SteamStub. No debugger attached (anti-debug risk; also an
   extra install). No full dump of the unpacked exe for now.
 - Only in test copy A, guard always on (saves sandboxed, network offline). Dumps and
-  game-data output stay in `local/`; we publish names, offsets and signatures only.
+  game-data output stay private; we publish names, offsets and signatures only.
 
 ### Steps
 
 1. **Probe module (tooling).** Add a `sowprobe` part to the guard DLL: a background
    thread that waits until the game has unpacked, keeps the game running unfocused,
-   and serves a named pipe so the agent can ask questions while the game runs:
+   and serves a named pipe so a client can ask questions while the game runs:
    `module` (base, sections), `scan <pattern>` (all hits), `read <addr> <len>`,
    `rip <addr>` (resolve rip-relative), `vars` (script-var list), `log` (captured debug
-   prints). Read-only by default; `write`/`call` only with `probe_write=1`. Python
-   client in `sow-coop/tools`. Offline tests like the guard's.
+   prints). Read-only by default; `write`/`call` only with `probe_write=1`. A small Python
+   client.
 2. **Check every known signature and RVA on our build.** Each pattern must hit exactly
    once; each RVA from the save editor must land on a function start. Record a
    signature table (pattern, hits, RVA, meaning, source, date) here. Expect matches
@@ -654,11 +650,11 @@ so we learn from it and do not copy code)
   `48 8B 0D ? ? ? ? E8 ? ? ? ? C7 47`), logs how long that took, and serves read-only
   `ping`, `module`, `scan`, `read`, `rip`, `deref` on a local named pipe. It reads only
   committed, readable, non-guard pages (VirtualQuery first), so it never trips a guard
-  page. Client: `sow-coop/tools/probe.py`.
-- Offline suite: **RESULT: PASS (23 of 23 cases passed)**; new `probe_serve` checks every
+  page. A small Python client talks to it.
+- A new offline case, `probe_serve`, checks every
   command against fixtures in a live child (marker scan exact and with wildcards, read,
   rip-relative resolve, pointer deref, unmapped read -> err, unknown command -> err,
-  still alive after errors) and `probe_off` (no pipe without `probe=1`). Mutant 6/6.
+  still alive after errors), and `probe_off` (no pipe without `probe=1`).
   Python client checked against a live probe.
 - Staged in test copy A (`probe=1`, `network=offline`). Next: launch with the probe on,
   confirm the ready pattern appears and when, then step 2 (check every known signature
@@ -667,8 +663,8 @@ so we learn from it and do not copy code)
 ## Session 2026-10-20 k: phase 3 step 2, signatures checked in the running game
 
 Launched test copy A with guard + probe (`network=offline`), left at the main menu
-(save not loaded). All checks below are read-only (`sow-coop/tools/sigcheck.py`,
-`diskcheck.py`); raw output in `local/phase3/`.
+(save not loaded). All checks below are read-only (small scripts over the probe); raw
+output kept private.
 
 ### Observations
 
@@ -767,7 +763,7 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
 
 ## Session 2026-10-20 l: phase 3 step 3, debug-print capture
 
-### Built (sow-coop `7606a1f`, offline suite 26/26, mutant 6/6)
+### Built
 
 - `probe_write=1` mode: pipe command `write <addr> <hex>` (logged), and hooks.
 - `hook_debug_print=1`: the debug print (found through the save editor's call-site
@@ -789,7 +785,7 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
 - Hook installed 330 ms after launch, before the game's own boot; game ran normally.
 - **0 debug lines** in the first 2+ minutes: release builds gate almost every call behind
   a per-channel byte flag that is off.
-- Static catalogue of the callers (`sow-coop/tools/dpsites.py`, exe file only):
+- Static catalogue of the callers (a script over the exe file only):
   **1,100 call sites**; categories include `[COMBAT|...]` (most), `[QUEST]` (99),
   `[QUEST|JOB]` (47), `[AI|SPAWNAMBIENT|REJECT]` (33), `[FACTION|AMBUSH]` (25),
   `[FACTION|RESURRECTION]` (19), `[FACTION|CATALYST]` (18), `[LOOT]` (18),
@@ -844,7 +840,7 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
   function, which clobbered r9; the `mov rax,imm64; jmp rax` patch also clobbered rax.
   **Root cause: our hook, not the game.**
 
-### Fix (sow-coop `b9e5421`)
+### Fix
 
 - Patch is a 5-byte `jmp rel32` (+ int3) to a stub page allocated within 2 GB of the
   game code: no register touched. The stub writes only the two home slots the original
@@ -854,7 +850,7 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
 - New test: generated machine code sets rax, rcx, rdx, r8-r11, xmm0-5 and two sentinels
   in the caller's home slots, calls the stub, and checks all of them after. The hooked
   stub and the original stub both pass ("regs ok"); a mutant that does not restore r9
-  fails ("changed: r9 r11"). Suite 26/26, mutant 7/7.
+  fails ("changed: r9 r11").
 - `debug_channels=<rva,...>` sets channel flags right after the hook installs (no race
   with the player loading a save). Staged with 22 channels; `FACTION|REWARD|REJECT`
   (`2A34DA8`) left off as noise.
@@ -899,7 +895,7 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
   even with Steam Cloud off for the game (it keeps the local copy and marks it unsynced).
   **In-process file redirection cannot cover this.** Correction to session c and
   session f: the Steam remote-storage writes are not made by the game process (the
-  `175823492` write seen in-process is a different file).
+  `<id>` write seen in-process is a different file).
 - Before any further session in which the game can save, the guard must stop
   `ISteamRemoteStorage` writes inside the game process (e.g. make FileWrite/
   FileWriteAsync/FileDelete/FileForget fail or turn them into no-ops) and the test
@@ -910,7 +906,7 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
 
 - With Steam fully closed (Steam may rewrite `remotecache.vdf` from memory on exit),
   restore `remote\<prefix>_ShadowOfWar.sav` and `remotecache.vdf` from the verified
-  backup `local/backups/2026-10-20/steam-userdata-356190/`, then rerun the backup check.
+  backup, then rerun the backup check.
 
 ### Playbook lesson (isolation)
 
@@ -922,8 +918,8 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
 - Restored (Steam fully exited, no Steam or game process running):
   `remote\<prefix>_ShadowOfWar.sav` and `remotecache.vdf` copied back from the verified
   backup with their original timestamps (robocopy /COPY:DAT); the test-written versions
-  kept in `local/backups/2026-10-20-steam-overwritten-by-test/`. Backup check after:
-  30/30 present, **unchanged** (render.cfg info only). Not yet seen: what Steam
+  kept aside. Backup check after: all
+  present, **unchanged** (render.cfg info only). Not yet seen: what Steam
   does with these files on its next start (it should find them matching its cache).
 
 ## Session 2026-10-20 o: Steam remote-storage guard (built, tested offline, staged)
@@ -936,14 +932,14 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
   FileShare 0x38, SetSyncPlatforms 0x40, FileWriteStreamOpen/WriteChunk/Close/Cancel
   0x48/0x50/0x58/0x60, SetCloudEnabledForApp 0xB8, UGCDownloadToLocation 0x1B0;
   ISteamClient::GetISteamRemoteStorage 0x88.
-- Guard (sow-coop `37a594b`, always on): waits for the game's SteamAPI_Init, gets the
+- Guard (always on): waits for the game's SteamAPI_Init, gets the
   same interface through the flat API, reads the slot offsets from the wrappers' bytes
   (any other shape: exit `0xC0DE0006`), and replaces those 12 write methods in the vtable
   with functions that log and report success (async/stream: invalid). Reads untouched.
 - Offline tests with a stand-in `steam_api64.dll` (byte-exact wrappers, counting
-  vtables; never copied into a game folder): **28/28 pass**; `steam_block`: all 12 writes
+  vtables; never copied into a game folder): `steam_block`: all 12 writes
   answered by the guard, none reached "Steam", FileRead passed through; mutant without
-  the guard: all 12 reached it (caught, 8/8). Note: this compiler emits
+  the guard: all 12 reached it. Note: this compiler emits
   `mov r10,[rax+off]; jmp r10` for such wrappers, so the fake's wrappers are raw bytes.
 - Staged in test copy A; the test copy's real `steam_api64.dll` is untouched (hash equal
   to the real install's). Backup check unchanged.
@@ -977,8 +973,8 @@ Launched test copy A with guard + probe (`network=offline`), left at the main me
 
 Sources: two captures with 22 channels on (combat and `FACTION|REWARD|REJECT` off), manual
 play on the sandboxed save: session 5 (42,977 lines, ~10 min, two captain kills) and
-session 6 (36,108 lines, ~6 min of play, 16 autosaves). Tool: `sow-coop/tools/dpanalyze.py`
-(message templates per category). Raw logs stay in `local/`.
+session 6 (36,108 lines, ~6 min of play, 16 autosaves), summarized into message
+templates per category. Raw logs stay private.
 
 ### Observations
 
@@ -1076,8 +1072,8 @@ session 6 (36,108 lines, ~6 min of play, 16 autosaves). Tool: `sow-coop/tools/dp
 Method (read-only, exe file; `.arch` is identical in memory, see session k): find each
 log format string, find RIP-relative `lea/mov` references to it in `.arch`, map them to
 functions through `.pdata` (following chained unwind entries), disassemble with
-`dumpbin /disasm`, find callers (E8/E9 rel32). Tool: `sow-coop/tools/xref.py`
-(`strings`, `callers`, `func`, `sig`). Signatures: built from the disassembly with only
+`dumpbin /disasm`, find callers (E8/E9 rel32), with a small script of our own.
+Signatures: built from the disassembly with only
 rel32 call/jump targets and RIP-relative disp32 wildcarded, grown until they match
 **exactly once** in `.arch` (checked by the tool). Build: Steam 3095001, exe SHA-256
 `ed0d95ca...0bdaef`, image base 0x140000000.
@@ -1125,8 +1121,8 @@ resurrection record; `"None"` (1DB4ED8) is the name used for a missing subject/o
 ## Session 2026-10-20 s: located functions confirmed in the running game (read-only)
 
 - Run with `probe_write=0` and `hook_debug_print=0` (nothing in the game's code patched;
-  file/network/Steam guards on), game left at the main menu, `sow-coop/tools/sigverify.py`
-  through the probe's read-only commands. **RESULT: PASS.**
+  file/network/Steam guards on), game left at the main menu, a script through the
+  probe's read-only commands.
 - All nine signatures from session r match **exactly once** in the running game, at the
   RVA found in the file, and the 64 live bytes at each equal the file: HandleFactionEventAction
   40C304, ApplyFactionEventOutcome 62E670, OnMemberKilled_EvaluateResurrection 6DB95C,
@@ -1142,14 +1138,14 @@ resurrection record; `"None"` (1DB4ED8) is the name used for a missing subject/o
 - RNG state at 2A25C88 read twice 5 s apart at the main menu: unchanged
   (`33A3E99A5479618B`): no random draws at the menu, so the LCG step itself was not
   observed live (needs a session with play).
-- Steam remote-storage guard in at 359 ms. Game stopped by the agent after the check
+- Steam remote-storage guard in at 359 ms. Game stopped after the check
   (exit 0xFFFFFFFF, forced); backup check unchanged; test-copy config restored.
 
 ## Session 2026-10-20 t: is the LithTech client/server split real at runtime? (static, read-only)
 
 Method: strings and their code references, references to registry entries, vtables and
 the code that installs them, call chains back to the program entry. Exe file only
-(`.arch` identical in memory). Tools: `sow-coop/tools/xref.py` plus small scripts.
+(`.arch` identical in memory). Tools: small scripts of our own.
 
 ### Observations
 
@@ -1221,177 +1217,19 @@ the code that installs them, call chains back to the program entry. Exe file onl
   connect requests and the manager's mesh pointer during a session (`net_trace=1`).
 - Whether the NetMesh layer is complete and usable as a transport.
 
-## Session 2026-10-20 u: second test copy and a two-instance attempt
+## Sessions 2026-10-20 u to 2026-10-21 w: a second test copy
 
-### Copy B
-
-- In seven launches the game wrote nothing into copy A's install folder except the files
-  the agent staged (`x64\bink2w64.dll`, `x64\sowguard.ini`). So copy B
-  (`test-installs\sow-b`) hardlinks everything outside `x64\` to copy A (893 files, the
-  archives and `game\`, read-only to the game) and has real copies of the 10 files in
-  `x64\` (exe, DLLs, guard, config). Exe hash equal to A. Disk use: ~0.12 GB.
-- Own sandbox profile (`sow-b-profile`), own probe pipe (pid in the name), windows side by
-  side through the sandboxed `render.cfg` keys `ScreenX`, `ScreenY`, `WindowWidth`,
-  `WindowHeight`, `Windowed`. `local/launch-sow.ps1 -Copy a|b [-AllowOthers]` launches one
-  copy and refuses this copy twice or any game process outside the test copies.
-
-### Two-instance attempt (both read-only probe, network offline, at the main menu)
-
-- Copy A started normally (window `Middle-earth™: Shadow of War™`, class `Shadow of War`,
-  ~1.2 GB). Copy B started alongside, passed the guard (exe identity, hooks, probe ready,
-  remote-storage guard in at 390 ms), then stopped at a dialog (class
-  `CustomerMessageDialog1`, title `Middle-Earth: Shadow of War`, 171 MB): *"The server is
-  not reachable, check your Internet connection and click "Retry". In case the problem
-  persists, click "Next" to open the support website in the default browser."* (read with
-  the window-text APIs; no screenshot). B tried `52.212.79.19:443` and `52.30.75.184:443`
-  (15 times each, refused by the offline mode); copy A's in-game online hosts are
-  different (`3.213.33.214`, `184.193.6.155`).
-- **Steam userdata `356190\175823492`** (1,178 bytes, hex text): copy A's sandbox has it
-  (written 17:15:10), copy B's does not. In launch 1 (copy A's first run, sockets
-  refused) the game probed for it at +0.8-1.4 s (absent), then the 68 s gap during which
-  the dialog and the support website were dealt with by hand, then **wrote it at
-  +68.8 s**; copy A never showed the dialog again. The real Steam folder has its
-  own copy of this file (from 2025-11-12).
-- Both instances stopped by the agent (no button clicked in B's dialog); backup check after
-  each: unchanged. Copy A's config restored.
-
-### Derived
-
-- The dialog and the file are Denuvo's online activation and its license token (the
-  wording, the support-website flow, the start-up timing and the token appearing right
-  after the first activation all fit; not confirmed by a source). Because the guard
-  sandboxes `userdata\<id>\356190` per copy, every new copy looks unactivated.
-- Whether the game itself allows a second instance (the exe contains `CreateMutex failed`)
-  is **not answered yet**: copy B stopped at activation before the game's own start-up
-  (answered in session v: yes, a named mutex).
-- Ways forward (none touches the protection itself): give copy B the
-  same token copy A has (both sandboxes mirroring one Steam userdata folder, as a
-  normal install would), or let copy B activate once by allowing only its two activation
-  hosts. Contacting the activation service may count toward Denuvo's activation limits
-  (unknown how many).
-
-## Session 2026-10-20 v: two instances with a shared license token; the single-instance check
-
-### Observations (launch)
-
-- Copy B's sandbox got its own copy of copy A's `userdata\<id>\356190\175823492` (same
-  SHA-256). Both copies ran with the read-only probe (`probe_write=0`,
-  `hook_debug_print=0`), network offline.
-- Copy A started and reached the main menu (~1.25 GB). Copy B started alongside: guard
-  ready, probe ready after 203 ms, remote-storage guard in at 375 ms, then the game
-  checked for and opened the token through the redirect (`NtQueryAttributesFile`, then a
-  read-only `NtCreateFile`; no write). No activation dialog, no connection attempts.
-  Then copy B **exited with code 0 after ~4 s**, with no window and no message; its guard
-  log ends at the token read.
-- Afterwards: copy B's token unchanged (same hash). Copy A stopped by the agent, its
-  config restored (`probe_write=1`, `hook_debug_print=1`). Backup check after both runs:
-  unchanged.
-
-### Observations (static, exe file only, read-only)
-
-- UTF-16 string `Local\{015C2674-4E09-4862-9A60-F96FA41BF0B1}` at RVA `22B5600`, one code
-  reference, in function `11793B8` (`11793B8..11793F3`):
-
-  ```
-  11793C1  lea  r8,[22B5600]     ; the name
-  11793C8  xor  ecx,ecx          ; arg 1 = 0
-  11793CA  xor  edx,edx          ; arg 2 = 0
-  11793CC  call [1D92170]        ; import slot
-  11793D2  mov  [rbx],rax        ; handle kept in the caller's local
-  11793DA  call [1D922A0]        ; import slot, no arguments
-  11793E0  cmp  eax,0B7h         ; 183 -> return 1, else return 0
-  ```
-
-- Its only caller is the engine start-up function `1178D80` (the one that later builds
-  the network manager and reads `-cmdfile ..\cmdline.txt`, session t), at `1178DB6`. If
-  `11793B8` returns 1, start-up calls `1179018` and **returns 0**. The check runs before
-  the `d3d11.dll` load test, the command-line file and window creation.
-- `1179018` reads a window handle from the global at `2C88000`; if it is set, it makes
-  four calls through import slots, one with the argument 9, all on that handle. It is
-  this process's own global, empty this early in a second process. No string, class
-  name or other window lookup on this path.
-- Ruled out as the instance check: `CreateMutex failed` (`A2B8A0`, avMutex library),
-  the user-folder builder (`C23200`), the write-test file `{25FFEBFB-...}` (`C24CA0`).
-
-### Derived
-
-- The silent exit is a named-mutex single-instance check: `CreateMutexW(NULL, FALSE,
-  name)` then `GetLastError() == ERROR_ALREADY_EXISTS` (183), and `1179018` is the usual
-  "restore and bring our window to the front" (`IsWindow`, `IsIconic`,
-  `ShowWindow(SW_RESTORE)`, `SetForegroundWindow`). The import names come from the call
-  shape only: SteamStub rebuilds the import table at run time, so the slots are not
-  named in the file. Live check (read-only, cheap): the probe's `deref` on `1D92170`,
-  `1D922A0` and the four `1D92xxx` slots of `1179018`, then `module` on the targets.
-- Copy B's exit code 0 and timing (~4 s, after Denuvo and the token read) match this
-  path. The playbook's symptom line ("non-zero exit code") does not fit this game.
-- Fix, as in `playbook/multi-instance-testing.md` section 2 option 1: inside our own
-  proxy, give this one name a per-copy suffix. The guard already hooks ntdll syscall
-  stubs; `CreateMutexW` ends in `NtCreateMutant` with the object name
-  `\Sessions\<n>\BaseNamedObjects\{015C2674-...}`, so a `NtCreateMutant` hook that
-  rewrites only this exact name, behind an ini switch only the test copies set, does it.
-  No change to the exe or the protection.
-
-### Unknown
-
-- Whether more instance checks follow later in start-up (lessons.md item 10: checks come
-  in layers): window-class lookups, shared files, Steam's own handling of two processes
-  of one app on one account. The live test after the rename will show.
-
-## Session 2026-10-21 w: per-copy instance mutex; two copies run side by side
-
-### Change (sow-coop, local)
-
-- New guard option `instance_mutex_suffix=<copy id>`: hooks `ntdll!NtCreateMutant` (same
-  syscall-stub hook as the file calls) and renames only a mutex whose last name
-  component is `{015C2674-4E09-4862-9A60-F96FA41BF0B1}` to `...-sowguard-<copy id>`.
-  Per copy, not per process, so the game still refuses the same copy twice (it would
-  share one sandbox profile). Without the option the hook is not installed.
-  `mutex_trace=1` logs every named mutex. No change to the exe or the protection.
-- Why ntdll and not the import table: SteamStub rebuilds the game's import table at run
-  time (session v), and `CreateMutexW` ends in `NtCreateMutant` whatever the import path.
-- Offline tests (fake game process, no game): the test holds `Local\<test name>` as
-  another copy would; with a suffix the guarded `CreateMutexW` passes, the mutex exists
-  under the per-copy name, a second create in the same copy still sees
-  `ERROR_ALREADY_EXISTS`, other names are untouched; without a suffix the check sees the
-  other copy and no mutex hook is installed; a bad suffix stops with a config error.
-  Suite 31/31; the negative-control build fails 9/9 dependent cases. The log shows
-  `CreateMutexW` hands `NtCreateMutant` the name as `Local\{...}` (relative to the
-  session's BaseNamedObjects directory) on Windows 11 26200.
-
-### Observations (launch: copy A with suffix `a`, then copy B with suffix `b`)
-
-- Both copies read-only probe, network offline, `mutex_trace=1`.
-- Copy A: `instance mutex renamed: Local\{015C...} -> Local\{015C...}-sowguard-a (status
-  0x00000000)` about 4.2 s after the guard started; main menu, ~1.22 GB.
-- Copy B, started while A was at the main menu: token read through the redirect (no
-  write), `... -> Local\{015C...}-sowguard-b (status 0x00000000)` 3.7 s after the guard
-  started, then **kept running**: window class `Shadow of War`, title
-  `Middle-earth™: Shadow of War™`, ~1.25 GB.
-- Checked about 25 s later: both processes responding, both using CPU (+3.7 s and
-  +4.4 s in 20 s), one visible window each, no dialog windows, both probes answer
-  `ready=1 write=0`. No connection attempts, no protected or watched writes, no FATAL in
-  either log. Each process had logged 39 named mutexes by then (`mutex_trace`).
-- Copy B ran 71 s next to copy A, then the agent stopped both (exit `0xFFFFFFFF` =
-  forced stop). Backup check after each: unchanged (render.cfg info only). Copy B's
-  token unchanged.
-- Copy B's first full start wrote `gpu.nfo` and `render.cfg` in its sandbox with
-  `"Windowed" "2.000000"` and opened a 1920x1080 window at 0,0 instead of 960x540 at
-  x=960. Set back to `1.000000` in copy B's sandbox (backup `render.cfg.before-windowed`).
-
-### Derived
-
-- The named mutex was the only check stopping a second copy, at least up to the main
-  menu. Two guarded copies of Shadow of War can now run at once on the test machine with one
-  Steam account, offline, each in its own sandbox.
-- Copy B was not seen on screen, so "main menu" for B rests on its window, size and
-  probe state matching copy A's; a look at the screen next time would confirm it.
-
-### Unknown
-
-- Whether a second check appears later (loading a save, entering the world, online
-  features). Next test: both copies load a save.
-- Whether Steam treats two processes of one app on one account differently once the
-  game calls more Steam APIs (achievements, stats, friends).
+- Copy B hardlinks everything outside `x64\` to copy A (893 files, the archives and `game\`;
+  the game wrote nothing there in seven launches) and has real copies of the 10 files in
+  `x64\` (exe, DLLs, the proxy and its config). Exe hash equal to A. Disk use: ~0.12 GB.
+- Each copy has its own sandbox profile and its own probe pipe; the windows sit side by side
+  through the sandboxed `render.cfg` keys `ScreenX`, `ScreenY`, `WindowWidth`,
+  `WindowHeight`, `Windowed`. A copy's first full start wrote `"Windowed" "2.000000"` (a
+  1920x1080 window at 0,0); set it back to `1.000000` in that copy's sandbox.
+- A second copy started next to the first stops at the game's online activation, and then at
+  its single-instance check. How the test copies got past both is left out of this
+  write-up: the hub does not publish DRM or launch-check workarounds. From session x on, two
+  copies ran side by side on one PC, offline.
 
 ## Session 2026-10-21 x: achievements blocked; both copies in the world (same save, see y)
 
@@ -1399,7 +1237,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
 > serves from the real Steam folder (the 2025-11-20 save), not their sandbox saves. Their
 > results differ only by the play after the load. The stats observation stands.
 
-### Change (sow-coop, local)
+### Change
 
 - The Steam guard now also replaces the write methods of the game's `ISteamUserStats`
   (`STEAMUSERSTATS_INTERFACE_VERSION011`, from `ISteamClient` slot 0x68). Offsets from
@@ -1409,8 +1247,8 @@ the code that installs them, call chains back to the program entry. Exe file onl
   `UploadLeaderboardScore` 0xF8, `AttachLeaderboardUGC` 0x100. Reads pass (e.g.
   `GetAchievement` 0x30). `UploadLeaderboardScore`'s wrapper uses
   `mov r10,[rcx]; jmp [r10+0xF8]` instead of rax; the shape check accepts both.
-- Offline tests with the stand-in `steam_api64.dll`: 31/31, mutant 9/9. After this
-  launch, achievements got their own log budget (stats used most of the shared one).
+- After this launch, achievements got their own log budget (stats used most of the
+  shared one).
 
 ### Setup
 
@@ -1418,12 +1256,12 @@ the code that installs them, call chains back to the program entry. Exe file onl
   of earlier test play (sessions n and p, two captain kills).
 - Copy B: the six saves from the backup, copied unchanged (hashes equal); Continue
   loads the 2025-11-20 save.
-- Both offline, per-copy instance mutex; A with the debug-print hook (22 channels), B
+- Both offline; A with the debug-print hook (22 channels), B
   with the read-only probe.
 
 ### Observations
 
-- Each copy loaded its save and was played by hand in turn; stopped by the agent after
+- Each copy loaded its save and was played by hand in turn; stopped after
   575 s (A) and 558 s (B). Both ~2.3 GB, responding, no crash, no FATAL, PROTECTED or
   WATCH line in either log.
 - Saves: 6 `FileWrite`s blocked in A (first at +122.8 s), 11 in B (first at +296 s);
@@ -1464,16 +1302,11 @@ the code that installs them, call chains back to the program entry. Exe file onl
   same save loaded twice would diverge without syncing results (one global LCG,
   session r).
 
-### Unknown
-
-- Whether a further instance check appears with the online features on (they are
-  offline here).
-
 ## Session 2026-10-21 y: unattended loading; the game loads its save from the Steam cloud
 
 ### Observations (static)
 
-- Menu path (reported by the person who loaded saves by hand): title "press any key",
+- Menu path (seen while loading saves by hand): title "press any key",
   then the campaign list. One real pad drove both copies at once, so the game reads
   XInput even when its window is not focused.
 - Console registry: `PlayerInput.SetSimInput` "Runs the listed commands in order, once
@@ -1493,7 +1326,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
   when the campaign's save has been read, `[QUESTMGR]: GameModeSet - SinglePlayer` when
   the world starts.
 
-### Change (sow-coop, local)
+### Change
 
 - `autoload=1`: a virtual pad on XInput user 0. The guard finds the game's
   `XInputGetState` slot in the rebuilt import table (RVA `1D93098`, start of `.xtext`,
@@ -1503,7 +1336,6 @@ the code that installs them, call chains back to the program entry. Exe file onl
 - `steam_cloud=sandbox`: the game's cloud reads and writes go to the copy's
   `steam-userdata\356190\remote\` (see below why). `steam_trace=1` logs reads Steam
   answers.
-- Offline tests: 34/34, mutant 11/11.
 
 ### Observations (launches, all unattended)
 
@@ -1559,13 +1391,12 @@ the code that installs them, call chains back to the program entry. Exe file onl
   `2672D91` is set and `player+0x3879` is clear) arms a timer at `player+0x3850` with
   0.5 s (`FF0B4`: start time, duration, a cleared field, a running flag).
 
-### Change (sow-coop, local)
+### Change
 
 - Probe `player` (read-only): position, rotation, health, max, fraction by that chain.
 - Probe `pad <buttons> <lx> <ly> <rx> <ry> <ms>`: hold virtual pad input (probe_write=1).
 - Probe `save`: once the world has started, the next pad read runs `Player.Save` after
   checking its 33 bytes and GameClient reference (probe_write=1).
-- Offline tests with stand-ins of the same layout and byte shape: 35/35, mutant 12/12.
 
 ### Observations (live, unattended, copies A and B)
 
@@ -1659,7 +1490,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
   simulation thread. It landed within ~6 units (the game put it a few units lower,
   on the ground) with A's rotation; over a 90 s walk 2,540 moves, ending 4.3 units from
   A's player; both copies kept running.
-- Seen on screen (the person playing copy A by hand): the orc in B "moved the same, but
+- Seen on screen while copy A was played by hand: the orc in B "moved the same, but
   it's a little laggy".
 - The first heap scans read every committed private page and grew B from ~2 GB to
   6.3 GB. Scans now read only pages already in the working set (`QueryWorkingSetEx`):
@@ -1677,7 +1508,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
 
 ## Session 2026-10-21 ac: smoother puppet (a packet every frame, interpolated)
 
-### Change (sow-coop, local)
+### Change
 
 - Packet version 2 (60 bytes) adds the sender's clock (QPC, microseconds).
 - Sender: once the simulation-thread hook runs, it sends one packet per game frame from
@@ -1688,10 +1519,9 @@ the code that installs them, call chains back to the program entry. Exe file onl
   places the puppet where the sender was `coop_delay_ms` (50) ago: position interpolated
   linearly, rotation by normalized lerp on the shorter arc, applied through the same
   queued teleport.
-- Offline: `test_guard` 38 of 38 (in `coop_puppet` a fake simulation thread walks the
-  sender +0.5 units a frame for 200 frames; the puppet has to follow in steps of at most
-  1 unit, never backwards, and end where the sender stopped), negative control 15 of 15
-  caught.
+- Offline case `coop_puppet`: a fake simulation thread walks the sender +0.5 units a frame
+  for 200 frames; the puppet has to follow in steps of at most 1 unit, never backwards,
+  and end where the sender stopped.
 
 ### Observations (live, unattended, copies A and B, both `background_run=1`)
 
@@ -1755,7 +1585,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
   all through this one chain. The code after the tree call (`2F5EB4`) reads only
   `rdx`, so leaving the call out is safe.
 
-### Change (sow-coop, local)
+### Change
 
 - `coop_puppet_ai=off`: the call at `2F7B45` is pointed (bytes checked, patched from the
   simulation thread) at a jump to a filter that skips the tree whose `+8` is the puppet.
@@ -1845,7 +1675,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
   (`35DC38(obj, 607610(obj, 0, 0), 0)`); both helpers pass `rdx`/`r8` on, so they must be 0.
   `501DA4` makes the name unique (appends a number), so any name works.
 
-### Change (sow-coop, local)
+### Change
 
 - Probe `spawn <type> [x y z]`: finds the type in the `0xA06` table (through the current
   puppet), calls `1036D0` on the simulation thread with the player's rotation, then the
@@ -1905,7 +1735,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
   call stack: `3F0E73` <- `E7D070` <- `2FEEC0` <- ... the frame update). `459474` is the
   animation object's virtual "set behavior resource" (`+0x4B0` and `+0x1878`).
 
-### Change (sow-coop, local)
+### Change
 
 - `spawn <type> x y z [appearance | abs:<record> | watch]`: the appearance lookup at
   `3FAB81` goes through a filter that answers with the given appearance during that one
@@ -1946,7 +1776,7 @@ the code that installs them, call chains back to the program entry. Exe file onl
 - Whether other characters treat the stand-in as Talion (targets, factions).
 - Foot sliding: not measured for this body yet.
 
-## Status summary 2026-10-21 (end of day, written for a context refresh)
+## Status summary 2026-10-21
 
 A condensed view of sessions a to af above; the sessions keep the evidence and sources.
 
@@ -1959,8 +1789,8 @@ A condensed view of sessions a to af above; the sessions keep the evidence and s
   rotation, health) over loopback UDP every frame; copy B shows a stand-in Talion that
   follows A, 50 ms behind, interpolated, with its own AI off and walking with the player's
   animations. Nothing goes from B to A yet; no world state is shared.
-- QA level: offline tests (`test_guard`, 40 of 40; negative control 17 of 17) plus live
-  checks by the agent (probe numbers, window captures). The spawn path is checked live only.
+- QA level: live checks (probe numbers, window captures). The guard's offline tests are in
+  an unpublished repo, so they are not claimed here.
 
 ### Key technical facts (build 3095001; RVAs from image base 0x140000000)
 
@@ -1973,8 +1803,8 @@ A condensed view of sessions a to af above; the sessions keep the evidence and s
 - Nemesis: `HandleFactionEventAction` 40C304, `RollResurrection` 6DBD4C,
   `SimEvent::Simulate` 622A84 and others (sessions r, s); outcomes come from one global LCG
   (state 2A25C88), so clients must never roll; `Faction.Save`/`Load` console programs exist.
-- Saves are loaded through the Steam cloud API (`ISteamRemoteStorage::FileRead`); the
-  single-instance check is a named mutex (sessions v, y).
+- Saves are loaded through the Steam cloud API (`ISteamRemoteStorage::FileRead`;
+  session y).
 - Player: `[[GameClient 26FFA98]+0x888]`, position `+0xAC`, quaternion `+0xB8`, health object
   `+0x26A8`. Engine calls that allocate must run on the simulation thread; we hook the
   player vtable `1F96818` slot 36 (per frame).
@@ -1994,24 +1824,16 @@ A condensed view of sessions a to af above; the sessions keep the evidence and s
 
 ### Guard, test copies and tools (state now)
 
-- `sowguard` (a `bink2w64.dll` proxy, our own code in the private `sow-coop` repo under
-  `local/`): file redirect into a per-copy profile, writes to the owner's install/saves
-  blocked, offline network (loopback only), Steam cloud sandbox and stats/achievements
-  write block, per-copy mutex rename, virtual pad and unattended loading, background
-  running, simulation-thread hook, co-op send/receive, puppet modes, and the probe pipe
-  (read, scan, findq, player, pad, save, teleport, stacks, watch, spawn, look, animres,
-  puppet ..., remote).
-- Two test copies (A sender, B receiver) are copies of the install under
-  `local/test-installs/`; the owner's install and saves are untouched (owner check
-  passes on every launch). Copy B runs `coop_show=puppet`, `coop_puppet_ai=off`,
-  `coop_puppet_move=both`, `coop_puppet_spawn=Talion`; copy A runs `coop_send`.
-- Launch: `local/launch-sow.ps1 -Copy a|b -TimeoutSec 7200 -AllowOthers`, A first; each
-  copy reaches the world unattended in about 48 s.
-- Commits: hub branch `game/shadow-of-war` at `fdb75fd`, 15 commits ahead of PR #99's
-  branch, not pushed; `sow-coop` at `fb752b4`, local only.
-- Several helper scripts used this session (wait for the world, window capture, record
-  listing, disassembly annotations) are still in the agent's temporary scratchpad, outside
-  the repo.
+- `sowguard` (a `bink2w64.dll` proxy, our own code, not published): file redirect into a
+  per-copy profile, writes to the real install and saves blocked, offline network
+  (loopback only), Steam cloud sandbox and stats/achievements write block, virtual pad and
+  unattended loading, background running, simulation-thread hook, co-op send/receive,
+  puppet modes, and an in-process probe (memory reads and scans, the player, pad input,
+  teleport, call stacks, write watches, spawning, puppet control).
+- Two test copies (A sender, B receiver) are copies of the install; the real install and
+  saves are untouched (checked before every launch). Copy B runs `coop_show=puppet`,
+  `coop_puppet_ai=off`, `coop_puppet_move=both`, `coop_puppet_spawn=Talion`; copy A runs
+  `coop_send`. Each copy reaches the world unattended in about 48 s.
 
 ### Open questions and biggest risks
 
@@ -2031,14 +1853,12 @@ A condensed view of sessions a to af above; the sessions keep the evidence and s
 
 ### Next steps, in order
 
-1. Move the scratchpad helper scripts into `local/sow-coop/tools/` so the next session has them.
-2. Stand-in polish: measure its walk/run speeds, set `coop_run_speed` (and try the request's
+1. Stand-in polish: measure its walk/run speeds, set `coop_run_speed` (and try the request's
    speed factor) against foot sliding; check turning and stopping on captures.
-3. Offline test for the spawn path (fixtures with the game's byte shapes).
-4. Make it two-way: B sends its player to A, A shows a stand-in too (same code, mirrored config).
-5. Then world state: host authority for enemies and Nemesis events (hook
+2. Offline test for the spawn path (fixtures with the game's byte shapes).
+3. Make it two-way: B sends its player to A, A shows a stand-in too (same code, mirrored config).
+4. Then world state: host authority for enemies and Nemesis events (hook
    `HandleFactionEventAction`, never roll on the client), and a real network transport.
-6. Show the owner the hub diff and ask before pushing (PR #99 or a follow-up PR).
 
 ## Session 2026-10-22 ag: the stand-in walks with the sender's own stride (animation inputs, anim mode)
 
@@ -2088,7 +1908,7 @@ A condensed view of sessions a to af above; the sessions keep the evidence and s
 - Spawning failed ("the game created nothing") while A's position was where B's own player
   stood; it worked 150 units beside it.
 
-### Change (sow-coop, local, commits 2997939, c451f2d and the next)
+### Change
 
 - `simhook`: an entry hook on `176D78` (bytes checked; a jmp written with one aligned 8-byte
   write; the stub calls the handler with the setter's own `rcx`, `rdx`, `xmm2`) records this
@@ -2103,20 +1923,18 @@ A condensed view of sessions a to af above; the sessions keep the evidence and s
   `Head()` byte checks refuse addresses outside the image.
 - Probe: `puppet follow anim`, `puppet inputs on|off`, `puppet snap <units>`,
   `puppet mirror on|off` (this copy's own inputs on the puppet), `inputs`.
-- Tools: `steer.py` (a copy's player along a world direction: stick angle = wanted heading -
-  camera yaw, camera yaw = player yaw - `CameraYawMinusPlayerYaw`), `root_match.py`,
-  `drift.py`, `view-steer.ps1`, `view-standin.ps1`, `strip.ps1`, `gait_speed.py`,
-  `anim_inputs.py`, `anim_bools.py`, `dumpf.py`, and the scratchpad helpers (`shot.ps1`,
-  `wait-world.ps1`, `walk-loop.sh`, `records.py`, `dis_annot.py`, ...).
+- Tools (unpublished): one steers a copy's player along a world direction (stick angle =
+  wanted heading - camera yaw, camera yaw = player yaw - `CameraYawMinusPlayerYaw`); others
+  measure the stand-in's path and drift against the sender's and capture the game window.
 - Removed: setting `Game_AnimRate` from the sender's speed, and the `DeltaYaw` steering.
 - A receiver that records nothing itself first skipped the inputs silently (the setter
   pointer was only set by the recorder) while counting them as given; captures made then
   showed teleport pinning without inputs. Fixed; the new offline case `coop_puppet_recv`
   (a receiver alone, packets from the test) failed on the old DLL and passes on the fix.
-- Offline: 41 of 41 (`coop_puppet_walk`: a fake player's inputs reach the puppet, a fourth
-  variable does not; `coop_puppet_recv`: the receiver alone applies them, `anim` leaves the
-  puppet alone while it is where the sender is and puts it back once the sender is 500 units
-  away); negative control 18 of 18.
+- Offline cases: `coop_puppet_walk` (a fake player's inputs reach the puppet, a fourth
+  variable does not) and `coop_puppet_recv` (the receiver alone applies them; `anim` leaves
+  the puppet alone while it is where the sender is and puts it back once the sender is 500
+  units away).
 
 ### Derived
 
