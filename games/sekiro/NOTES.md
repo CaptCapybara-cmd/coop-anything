@@ -790,3 +790,10 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   the clone's (min of both sizes); log both sizes.
 - Run 51: no copy happened (bvar_copies 0): the +0x148 size check rejected the array. Run 52:
   copy a fixed 0x400 bytes from `[X+0x140]` (what the scan read) and log the header at X+0x148.
+- Run 52: header at X+0x148 = size 0x58, capacity 0x158, but `[X+0x140]` = 0x970000002c (not a
+  pointer): the scan path is not stable; copies 0 again.
+- RTTI: hkbVariableValueSet vftable 0x2c14748, hkbBehaviorGraph 0x2c14788 (+0x38 view 0x2c14870),
+  hkbCharacter 0x2c408b0.
+- Run 53: find hkbVariableValueSet objects by vtable from the module bag (depth 5, ≤ 6000
+  objects, once per character, logged), copy the Hero's word array (+0x10, size +0x18) and quad
+  array (+0x20, size +0x28) into the clone's each wrapped update.
