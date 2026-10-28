@@ -731,3 +731,13 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   from defaults, movement possibly gated by a state the net path's init sets).
 - Run 46: post-create steps (0x9f5170 type + vt+0x90) with type 0 instead of 1 (type 1 made it
   invisible in run 36), no overwrite, slot 0 kept.
+
+### Run 46 (2026-10-28 04:09): init with type 0
+- Owner: clone visible, no phantom glow, now without the prosthetic (matches his character);
+  his character obeys; the clone still does not walk. Also: in run 37 the clone glided with
+  small snaps and never took steps. So locomotion animation never worked on the clone,
+  whatever the input; actions (attacks, block) do play.
+- `WalkAnim` / `WalkAnim_Enemy` vftables 0x29d6170 / 0x29d6240 are only referenced from
+  0x7f57e0 (registers callbacks; looks like debug-menu wiring), not a lead.
+- Run 47: one-shot diff of small values (< 0x10000) between Hero and clone, both standing, over
+  ChrIns (0x2300), ChrCtrl (0x600) and the first 32 modules of +0x1ff8 (0x300 each).
