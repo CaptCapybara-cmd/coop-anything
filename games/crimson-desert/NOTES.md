@@ -702,3 +702,26 @@ stale first branch after a finished scene still re-runs it without the dedup). I
 Limits: ReliableChannel takes its stream ids from std::random_device, so a fuzz seed does not always replay byte for byte;
 guests restarting from an OLDER save of their own, and host rewinds past a guest's accepted quest, are only partly modelled
 (the guest keeps what it has; the view compares only what the host still has).
+
+## 2026-10-28 — a test-only UDP mode for two PCs on one Tailscale tailnet
+
+Why: the owner's two PCs share one Steam account, and one Steam client runs in offline mode. cdmp's Steam transport
+needs both clients online, and the host accepts only a Steam friend, which one account can't be to itself. cdmp's UDP
+transport was deliberately limited to one PC (the code's reason: Steam hides the IPs, encrypts, and admits only
+friends).
+
+What: `[dev] udp_tailnet=1` (off by default). Tailscale keeps addresses inside the tailnet and encrypts (WireGuard),
+which covers the same three reasons.
+- The host binds to its own Tailscale address, found with a UDP connect() toward 100.100.100.100; that sends nothing.
+- The host drops datagrams from outside 100.64.0.0/10.
+- The guest refuses a `peer_host` outside that range.
+
+Observed:
+- builds;
+- `test_tailnet_udp` passes: it checks the range's edges, and that a loopback sender is dropped in tailnet mode but
+  delivered in plain mode;
+- with the drop removed on purpose, the test fails 3 checks;
+- the Linux PC has a `tailscale0` IPv4 address.
+
+Unknown: whether the game under Proton sees that address, and the whole two-PC run. Next step for a new session:
+[HANDOFF.md](HANDOFF.md).
