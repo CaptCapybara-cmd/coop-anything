@@ -583,3 +583,16 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   +0x18 → +0x21f8, +0x20 → +0x2260. The manipulator lands at ChrIns+0x58.
 - Run 34: fill +0x18 and +0x20 from the Hero's own values (shared object), kind 0; log the Hero's
   +0x21f8 vtable and manipulator vtable.
+
+### Run 34 (2026-10-28 03:13): second Wolf exists, no animations
+- Hero fields: +0x21f8 object vtable RVA 0x2b19648, +0x2260 = 0, Hero manipulator =
+  PadManipulator (0x29d4b30). With data +0x18/+0x20 copied from the Hero and manipulator kind 0
+  (ChrManipulator), 0xa49460 created a PlayerIns (handle Hero+1) and the game did NOT crash.
+- Owner: a phantom (second Wolf) appeared but showed no animations.
+- Log: 1472 steps, 176 warps, 21 anim resets, 18 ForcePlayAnimation calls, 0 refused; 300 ms
+  later the PlayerIns animation id read 0 (or 790010 / 200000), never the forced id.
+- Derived: on a PlayerIns, ForcePlayAnimation (0xbd84c0) does not start player animations;
+  player moves come from the behavior script fed by the manipulator (Pad for the local player,
+  NetworkManipulator for DS3-style remote players).
+- Next: try kind 2 (NetworkManipulator) and find what it reads; or feed the remote's pad input
+  into the puppet's manipulator so the game's own behavior plays the moves.
