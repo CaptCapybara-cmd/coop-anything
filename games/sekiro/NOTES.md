@@ -702,3 +702,9 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Owner: the clone still teleports.
 - Run 42: below 4 m, nudge the raw position 4 % of the error per step (when > 0.3 m); native warp
   only beyond 4 m or 3 m in height; log the clone's distance to the remote position.
+
+### Run 42 (2026-10-28 03:53): nudges
+- Owner: teleports softer, but the clone still does not walk (no walk/run animation).
+- Run 43a/b: `run-wolf.cmd - none` (no overwrite: the clone's own pad update stands; expect it to
+  walk from the local pad at once) and `run-wolf.cmd - base` (overwrite only the ChrManipulator
+  part < 0x340). Tells whether walking comes from fields we overwrite or from elsewhere.
