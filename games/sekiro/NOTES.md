@@ -762,3 +762,18 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Next (offline, no runs): find the writer of the player's locomotion behavior variables and
   its condition; compare with NetworkManipulator overrides (0x29d4530: slots 0x48, 0xb0,
   0xc0-0xd0, 0xf0, 0x100-0x130).
+
+### Offline: where locomotion comes from (2026-10-28 ~04:40)
+- Behavior variable descriptor table at 0x3b08e10 (stride 0x10: name ptr, flags): "Behavior",
+  "Init_wild", then IsLockon, MoveAngle, MoveSpeedLevel, MoveDirection, TurnAngle,
+  IsEnableFootIk, hand IK, AddBlend00-09, OriginalityAddBlend00-04, JumpAngle, JumpStickLevel,
+  AttackAngle, AttackStickLevel, ... (UTF-16 names at 0x2a77210+). Users: 0xb41480/0xb414f0
+  (+0x3b08e10), 0xb3cef0, 0xb442c0 (anim reset), 0xb46380, 0xb46820 (+0x3b08e18 → 0xff1cd0
+  binds it), 0xb463e0 / 0xb46870 (+0x3b08e28). Animation module field +0xd04 = behavior variant.
+- HKS bindings: "env" → 0x1404c00 → handler pointer 0x3ead050 = 0x1010a60 (installed by
+  0x1010450, with "act" 0x3ead058 = 0x1010790); "hkbFireEvent" registered at 0x13f78c0.
+- Derived: the clone's HKS runs (actions play), so the walk/run choice depends on behavior
+  variables such as MoveSpeedLevel/MoveAngle that the clone never gets. Plan: find the hkb
+  variable value storage at runtime (behavior module → hkbCharacter → behavior graph →
+  variable values), compare Hero vs clone while the Hero runs, then send those few variables
+  and write them on the clone each frame. No run done yet.
