@@ -571,3 +571,15 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Run 33 (`SEKIRO_COOP_SPAWN_PLAYER=1`): log Hero+0x2000 vs `[GameDataMan]+8`; if equal and the
   0xa49460 bytes match, call it with data = {id 1, Hero's PlayerGameData} and pin the result
   (logic/team untouched, anim passthrough on).
+
+### Run 33 (2026-10-28 03:08): PlayerIns created, then crash
+- Log: Hero+0x2000 = `[GameDataMan]+8` (PlayerGameData confirmed); WorldChrMan+0x40 slot count 6;
+  0xa49460 returned a PlayerIns (vtable 0x2a2b338), handle = Hero handle + 1, char id 0.
+- Crash ~0.3 s later: sekiro.exe 0x803bfd in 0x803a00: `chr->vt[+0x308]()` (0xa2a0f0, returns
+  PlayerIns+0x21f8) was null. The ctor copies +0x21f8 from data+0x18.
+- Data layout read from the ctor: +0 int id, +4 int manipulator kind (0x7f8480: 0 ChrManipulator,
+  1 PadManipulator, 2 NetworkManipulator, 3 ReplayManipulator, 5 NetAIManipulator; vftables
+  0x29d2ae0 / 0x29d4b30 / 0x29d4530 / 0x29d5ae8 / 0x29d3eb8), +8 PlayerGameData, +0x10 optional,
+  +0x18 → +0x21f8, +0x20 → +0x2260. The manipulator lands at ChrIns+0x58.
+- Run 34: fill +0x18 and +0x20 from the Hero's own values (shared object), kind 0; log the Hero's
+  +0x21f8 vtable and manipulator vtable.
