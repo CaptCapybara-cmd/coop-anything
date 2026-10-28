@@ -725,3 +725,23 @@ Observed:
 
 Unknown: whether the game under Proton sees that address, and the whole two-PC run. Next step for a new session:
 [HANDOFF.md](HANDOFF.md).
+
+## 2026-10-28 (later) — two-PC setup checks: Windows PC + Linux PC over Tailscale (no game run yet)
+
+Observed:
+- Windows PC: Visual Studio Build Tools 2022 (17.14) with the MSVC x64 tools and the bundled CMake; Tailscale running.
+- The Linux PC answers `tailscale ping` through a DERP relay; no direct connection yet (the PCs are on different LANs).
+- Under Proton Experimental's wine inside Steam Linux Runtime 4 (test prefix), `ipconfig` lists a `tailscale0` adapter
+  with the Linux PC's 100.x IPv4 address. This answers the earlier unknown: Proton sees the address.
+- The Linux PC's newest coop kit (`dist/cdmp-coop-20261022.zip`) is older than the udp_tailnet commit.
+- The Linux PC's Steam has `WantsOfflineMode` set to 1.
+
+- Rebuilt on the Linux PC from cdmp 5414b82 (clang-cl cross build in podman): BUILD_OK; `package_coop.sh` wrote
+  `dist/cdmp-coop-20261028.zip` (2127 KB); `cdmp_tests.exe` under Proton's wine in SLR 4: "All tests passed".
+
+Derived: the 20261022 kit predates udp_tailnet; use the 20261028 kit for the two-PC test.
+
+Guess: cdmp's way of finding its address (a UDP connect() toward 100.100.100.100) should pick `tailscale0` under wine,
+because wine uses the Linux routing table. Not checked in the game.
+
+Unknown: the two-PC run itself, and whether the relay's latency matters.
