@@ -596,3 +596,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   NetworkManipulator for DS3-style remote players).
 - Next: try kind 2 (NetworkManipulator) and find what it reads; or feed the remote's pad input
   into the puppet's manipulator so the game's own behavior plays the moves.
+
+### Run 35 plan: input copy
+- ChrManipulator base layout from its ctor 0x7e3220 (0x340 bytes): vectors at +0x10..+0x50,
+  +0x60, +0x80..+0xe0; two 81-byte arrays +0xf4 and +0x145; 81 dwords at +0x198; scalars to
+  +0x2fc; +0x300 qword (pointer?) and +0x310..+0x330.
+- `SEKIRO_COOP_PUPPET_INPUT_COPY=1`: every step copy Hero manipulator (+0x58, PadManipulator)
+  bytes +0x10..+0x300 into the PlayerIns puppet's manipulator (kind 0, ChrManipulator).
+  `NOPOS=1`: one warp beside the Hero, then no position writes, so the input alone moves it.
+  Local test only (no network delay): the puppet should copy the owner's moves at once.
