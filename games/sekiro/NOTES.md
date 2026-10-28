@@ -819,3 +819,14 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   SprjChrBehaviorScriptModule 0x2a7a3b8, SprjChrBehaviorDataModule 0x2a76c20. Havok
   hkbCharacter ctor callers lead to 0x100c570 (← 0xffb350, 0xffb8f0).
 - Run 54: log Hero vs clone module bags by vtable and the behavior module's first fields.
+
+### Run 54 (2026-10-28 04:52): module bags
+- Hero and clone have the same modules in slots 0x0-0x118 (incl. 0x8 SprjChrBehaviorScriptModule,
+  0x28 SprjChrBehaviorModule, 0x30 SprjChrBehaviorSyncModule, 0xb8 SprjChrBehaviorDataModule),
+  and the behavior module's first fields hold the same types (+0x18 SprjBehaviorCharacterProxyDriver,
+  +0x20 CSBehRaycastInterface, +0x28 SprjFD4LocationHkaPoseImporter).
+- Only the Hero has: 0x120 NtcChrHitWallModule, 0x128 CSChrDockingModule, 0x138
+  CSWireActionHitChangeModule (local-player extras).
+- So the clone does have a behavior module; run 53's "no hkbVariableValueSet" was likely the
+  search cap. Locomotion is blocked elsewhere: candidates are the missing local-player modules
+  or a local-player check in the HKS env functions used for movement.
