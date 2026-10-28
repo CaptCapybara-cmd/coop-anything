@@ -605,3 +605,14 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   bytes +0x10..+0x300 into the PlayerIns puppet's manipulator (kind 0, ChrManipulator).
   `NOPOS=1`: one warp beside the Hero, then no position writes, so the input alone moves it.
   Local test only (no network delay): the puppet should copy the owner's moves at once.
+
+### Run 35 (2026-10-28 03:21): input copy
+- Owner: the second Wolf turns with him but stays in place, no animations; when he attacks, a
+  posture bar appears as if he had been hit (guess: shared PlayerGameData / +0x21f8 object).
+- Log: manipulator copy ran (src PadManipulator 0x29d4b30 → dst ChrManipulator 0x29d2ae0); move
+  vector +0x10 copied (e.g. [-0.52, 0, -0.85]); the first 16 action bytes at +0xf4 stayed 0; the
+  puppet's animation was 790010 (idle), so its animation system runs.
+- Net path after 0xa49460 (0xa7a8cc..): `0x9f5170(chr, type)` (ChrIns+0x70 = type, then
+  0x9f64d0), `chr->vt[+0x90]()` (PlayerIns 0xa23790), types 1/2/12 clear bit 3 of +0x1a11, then
+  0x89bb20(…, handle, type, 1, -1, -1, 0) and an initial warp near the Hero.
+- Run 36: do those post-create steps (type 1), keep input copy, log ChrCtrl+0x120/+0x358.
