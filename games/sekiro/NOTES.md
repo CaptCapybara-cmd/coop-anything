@@ -560,3 +560,14 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - A Wolf-looking puppet is a PlayerIns (or ReplayGhostIns) with its own PlayerGameData. Next:
   map 0xa058a0 / 0xa05a80 / 0xa06180 arguments (net-player slot?), or build a minimal replay
   data block for 0xa077e0 and drive the ghost with our warp/anim calls.
+
+### Net player path (offline) and run 33 plan
+- `0xa7a840` (net code) → `0xa49460(WorldChrMan, id, data)` → `0xa07960(WorldChrMan+0x40, id,
+  data)`: first free player slot from index 1 (slot 0 = local; slot stride 0x38) →
+  `0xa05a80` → PlayerIns ctor `0xa217a0(this, init, data)`, which stores `[data+8]` at
+  `PlayerIns+0x2000` (guess: PlayerGameData, as DS3 PlayerIns+0x1FA0). Then vt[+0x6e8](chr, 0x2a0b0c0).
+- Game globals: GameDataMan 0x3d5aac0 (equipment code 0x9cbf0e reads `[GameDataMan]+8` →
+  +0x278); Sekiro Online references it 11 times.
+- Run 33 (`SEKIRO_COOP_SPAWN_PLAYER=1`): log Hero+0x2000 vs `[GameDataMan]+8`; if equal and the
+  0xa49460 bytes match, call it with data = {id 1, Hero's PlayerGameData} and pin the result
+  (logic/team untouched, anim passthrough on).
