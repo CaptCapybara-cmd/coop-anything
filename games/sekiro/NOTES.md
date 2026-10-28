@@ -849,3 +849,7 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - run-wolf-local.cmd has the hook off again.
 - Next: check how often the clone's ChrIns update / behavior update runs versus the Hero's
   (count calls per second), and what decides a character's update rate.
+- Owner (05:01): for a while now (local runs, no position writes) the clone does not even glide;
+  it just stands. So in those runs nothing moved it: its own input was not processed. The
+  earlier gliding came from our warps/nudges (net runs) and, in run 37, from the shared pad.
+  Fits the throttled-update lead (124 manipulator updates in a run).
