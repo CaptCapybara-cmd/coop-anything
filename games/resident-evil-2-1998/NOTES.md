@@ -458,10 +458,14 @@ investigated.
 Not done / unknown:
 - (Solved later the same day, see below.) A real pickup by a bot first failed: right after a warp,
   square sets nothing.
-- An item the other player takes while you are in the same room stays visible until you re-enter
-  (pickup is refused live: the item handler checks the flag first, static only).
-- Code that writes the flag arrays inline, without Flg_on/Flg_off: not surveyed. Such changes on
-  the client would be overwritten by the host.
+- (Done later the same day, see below.) An item the other player took while you were in the same
+  room stayed visible until you re-entered.
+- Code that writes the flag arrays inline, without Flg_on/Flg_off (capstone scan of .text for
+  memory-operand writes into the shared ranges, 13 hits): the low byte of `0x98EBD0` (SaveData+0x434,
+  last dword of Item_flg) is a puzzle state written directly at `0x4CB6F0`, `0x4E3A82`, `0x4E3A9C`
+  (which puzzle: unknown); Zapping_flg (+0x588/+0x58C) is copied whole at `0x4B7759`. The other 8
+  hits are Item_work entries addressed as `[i*4 + 0x98ED30]` (1-based index). Consequence: these two
+  written on the client are overwritten by the host's copy (the host's puzzle state wins).
 - Inventories stay separate (each player's Item_work).
 - A crash of copy B at `0x4E2AF2` during this session came from a debug write of -1 to
   `0x98EAE4` (an AOT index the game reads), not from the plugin.
@@ -480,3 +484,13 @@ Real pickup by a bot (2026-10-28, later):
   flag and no item message): 11/11 with the client picking and with the host picking, on udp with
   30% loss (3 runs), steam-mock and udp without loss (both orders each); `qa_suite.py` 33/33 and `storytest.py`
   16/16 on steam-mock and udp in the same series.
+
+Item taken by the other player, same room (2026-10-28, later):
+- Observed (static): after Flg_on the pickup at `0x4FE005` reads MD1 (byte +6 of the item data) and,
+  unless 0xFF, zeroes Be_flg of object work `0x98A61C + MD1 * 0x1F8`, which hides the item's model.
+- re2coop now does the same when a flag in Item_flg (stage 0-3) or +0x438 (stage 4+) goes 0 -> 1
+  through a peer's packet (client: host copy; host: client change) and an item AOT (Sce 2) of the
+  current room carries that flag. SharedBlock `items_hidden` counts it.
+- `pickuptest.py` 13/13 (udp and steam-mock, both orders; qa_suite 33/33 and storytest 16/16 in the same series): the room 0x06 item's model (MD1 3, Be_flg 0xB on both) goes to Be_flg 0 on
+  the other player within 2 s, without leaving the room. Checked in memory only: screenshots of the
+  copies came out black at that point, so not checked by eye.
