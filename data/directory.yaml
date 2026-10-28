@@ -4515,7 +4515,7 @@
   - search GitHub, Nexus and ModDB via web search, 2026-10-16
 - game: God of War (2018)
   year: 2022
-  engine: Santa Monica Studio proprietary
+  engine: Santa Monica Studio Kinetica
   project: (none found)
   url: ''
   other_urls: []
@@ -4531,14 +4531,17 @@
   open_source: unknown
   last_activity: unknown
   qa: none
-  notes: PC release year shown; no co-op or multiplayer mod found, only trainers, cosmetic mods and an Atreus companion
-    AI tweak. Reddit could not be searched with my tool.
+  notes: PC release year shown; no public co-op mod found on GitHub/Nexus/ModDB. Static and runtime analysis of Steam build 11168363 (games/god-of-war-2018) verified that GoW.exe code/data are unencrypted on disk, gameplay and Atreus AI run on 1,423 uncompressed Lua 5.2 scripts in .wad files with full debug info, GoW.exe links socket.core (LuaSocket TCP/UDP) and cmsgpack into every Lua VM, and an asymmetric Kratos + Atreus UDP co-op prototype (version.dll + creature/locomotion.lua in son00's VM) was built and verified with 2 simultaneous instances and tools/chaos on 1 PC.
   sources:
+  - https://github.com/Nukem9/godofwar-gameplay-tweaks
+  - https://github.com/adore11s/God-of-War-VR-Mod
+  - https://github.com/kainotoa/GOWTool
+  - https://www.eurogamer.net/god-of-war-modder-makes-atreus-playable
   - https://www.moddb.com/games/god-of-war-2018/mods
   - https://www.nexusmods.com/godofwar/mods/top
-  checked: 2026-10-16
+  checked: 2026-10-28
   searched:
-  - search GitHub, Nexus and ModDB via web search, 2026-10-16
+  - search GitHub (repos, forks, issues/PRs), Nexus, ModDB and Reddit via web search, 2026-10-28
 - game: Horizon Zero Dawn
   year: 2020
   engine: Decima
