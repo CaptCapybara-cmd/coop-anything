@@ -529,3 +529,34 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   c0000 model/render path reads. A Wolf-looking puppet needs the player-character path
   (PlayerIns + its game data, as DS3 remote players), not the debug creator. Not attempted.
 - Launch script back to the Owl puppet (5060, action map).
+
+## Session 1 (cont.): Wolf-looking puppet — research (offline, 2026-10-28 ~03:00)
+
+### Observations (1.06 image)
+- RTTI: `PlayerIns` (vftable 0x2a2b338), `ReplayGhostIns` (0x2a2d190, derives from PlayerIns: its
+  ctor 0xa39100 calls the PlayerIns ctor 0xa217a0), `ReplayManipulator` (0x29d5ae8),
+  `ReplayRecorder`, `PlayerGameData`, `EquipGameData`, `ChrAsm`, `CSDisplayGhost`,
+  `FrpgNetWanderingGhostDb`, packet `tag_DP_REGULAR_REPLAY_GHOST`. Strings "Play Replay Ghost",
+  "Create Replay Ghost", "compressedGhostData", "replayGhostIns!=NULL".
+- PlayerIns ctor callers: 0xa058a0, 0xa05a80, 0xa06180 (factories next to WorldChrMan code) and
+  the two ReplayGhostIns ctors.
+- ReplayGhostIns ctor 0xa39100(this, ?, ?, replayData, type): stores replayData at +0x2298,
+  allocates a 0xa10-byte object at +0x2290 (0x7bfe80; guess: its own PlayerGameData) and fills it
+  from replayData+0xd4 (0x7c4250) and the flag at replayData+0xc (0x7c4260).
+- 0xa077e0: finds a free slot (stride 0x38) in a table and calls 0xa057a0 → ctor variant
+  0xa39280 (type 3), then sets `ghost+0x1a3c = 1`. Called from 0xa493c0 (WorldChrMan code).
+- The debug creator's create (0xa492e0) goes through 0xa075d0, not the replay path; with model
+  c0000 it builds a character without player data, hence the crash in runs 31-32.
+
+### Sekiro Online 2.05 (owner-provided dinput8.dll, SHA-256 b40dd9c3…, kept in local/)
+- readme: LukeYui, P2P via Steam, summon server for signs, up to 6 players, world/event/enemy
+  sync. No license text. Built 2021-06-10 (PE stamp 0x60c26c70); not packed.
+- Statically it holds absolute addresses of game globals only (WorldChrMan 0x3d7a1e0 ×23,
+  SoloParamRepository 0x3d978b0, others); game function calls are not visible as constants and
+  its strings are partly XOR-obfuscated. Learning its spawn path needs dynamic tracing. Stopped
+  here; we do not copy its code.
+
+### Derived / next
+- A Wolf-looking puppet is a PlayerIns (or ReplayGhostIns) with its own PlayerGameData. Next:
+  map 0xa058a0 / 0xa05a80 / 0xa06180 arguments (net-player slot?), or build a minimal replay
+  data block for 0xa077e0 and drive the ghost with our warp/anim calls.
