@@ -616,3 +616,21 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   0x9f64d0), `chr->vt[+0x90]()` (PlayerIns 0xa23790), types 1/2/12 clear bit 3 of +0x1a11, then
   0x89bb20(…, handle, type, 1, -1, -1, 0) and an initial warp near the Hero.
 - Run 36: do those post-create steps (type 1), keep input copy, log ChrCtrl+0x120/+0x358.
+
+### Run 36 (2026-10-28 03:28): post-create steps make it invisible
+- Post-create steps ran (type 1, vt+0x90 OK, ChrIns+0x70 = 1, team became 2). The PlayerIns
+  stood ~5 m from the Hero (log position) but the owner could not see it. Guess: type 1 (white
+  phantom) needs the phantom render setup, or vt+0x90 / the +0x1a11 bit hides it.
+- ChrCtrl+0x120 = ChrIns+0x58 for both Hero and puppet (+0x358 null): the copy went to the
+  manipulator the ChrCtrl uses. Still no movement in run 35. Guess: the consumer calls the
+  manipulator's virtual getters; the base ChrManipulator's getters ignore the copied fields
+  (PadManipulator overrides them). Next: kind 2 (NetworkManipulator) and its data source, or
+  copy into a PadManipulator-kind puppet with the pad read disabled.
+- run-net.cmd is back to the Owl puppet; run-wolf.cmd keeps the PlayerIns test.
+
+## State at pause (2026-10-28 03:30)
+- Working: Owl (c5060) spawned by the debug ChrCreator as a harmless network-driven puppet:
+  follows, turns, combo hits / block / parry / dodge mapped (owner-observed, loopback simulator).
+- In progress: Wolf-looking puppet via the game's net-player path (PlayerIns created, stable
+  without post-steps, no animations yet).
+- Not started: Steam relay, two-PC test, automated QA.
