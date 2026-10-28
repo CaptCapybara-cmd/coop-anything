@@ -741,3 +741,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   0x7f57e0 (registers callbacks; looks like debug-menu wiring), not a lead.
 - Run 47: one-shot diff of small values (< 0x10000) between Hero and clone, both standing, over
   ChrIns (0x2300), ChrCtrl (0x600) and the first 32 modules of +0x1ff8 (0x300 each).
+
+### Run 47 (2026-10-28 04:14): Hero vs clone state diff (both standing)
+- 400 differing small u32 values (capped). Selected:
+  - ChrIns: +0x78 hero 0xa000 / clone 0xa001; +0x128 4 / 0; +0x10ec 1 / 0; +0x2040 4 / 6;
+    +0x2224 2 / 0; +0x1210..+0x1990 a table filled for the Hero, empty for the clone.
+  - ChrCtrl (+0x50): +0x8 0 / 6; +0x118 0 / 5; +0x2c4 1 / 0; +0x408 6 / 0x16; many bytes
+    +0x414..+0x5f4 set to 1 for the Hero, 0 for the clone (a per-action table).
+  - Modules +0x1ff8: differences in modules 0x8-0x70 (most in module 0x10 = TimeAct, 66).
+- Run 48: copy ChrIns +0x78, +0x128, +0x10ec Hero → clone once (15 s after the pin), log old/new.
