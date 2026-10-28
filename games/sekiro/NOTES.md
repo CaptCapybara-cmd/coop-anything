@@ -724,3 +724,10 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Run 45 (run-wolf-local.cmd): keep Pad vtable slot 0 (no override), wrappers on with no
   overwrite (ranges none), NOPOS. Question: does the clone walk when it has its pad device, and
   does the owner keep control (run 37 had no wrappers and he lost control)?
+
+### Run 45 (2026-10-28 04:05): slot 0 kept, no overwrite
+- Owner: the clone still does not walk. He notes the clone has the prosthetic arm while his
+  character (early save) does not yet. Guess: the clone is not fully initialised (appearance
+  from defaults, movement possibly gated by a state the net path's init sets).
+- Run 46: post-create steps (0x9f5170 type + vt+0x90) with type 0 instead of 1 (type 1 made it
+  invisible in run 36), no overwrite, slot 0 kept.
