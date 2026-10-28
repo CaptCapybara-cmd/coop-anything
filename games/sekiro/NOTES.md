@@ -640,3 +640,17 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   copy, NOPOS (one warp beside the Hero). Question: does a second PlayerIns with its own
   PadManipulator move from the local controller? If yes, the next step is to feed that
   manipulator's pad read with the remote player's input instead.
+
+### Run 37 (2026-10-28 03:34): PlayerIns with PadManipulator
+- Owner: all control went to the clone (the clone moved and acted from his controller; his own
+  character stopped responding). So a second PlayerIns with a PadManipulator animates and acts
+  fully; the input source is the only missing piece.
+- Manipulator vtables (1.06): Pad overrides base slots 0x0 (update: 0x7f2210 → 0x7ef930 unless
+  global 0x3d5b4a8 is set), 0x8 (dtor), 0x38, 0x48, 0x50, 0x58, 0xa0, 0xa8, 0xb0; Network
+  overrides 0x0, 0x8, 0x48, 0xb0, 0xc0-0xd0, 0xf0, 0x100-0x130. PadManipulator (0x450 bytes)
+  owns sub-objects at +0x350 (0x4f30 bytes, ctor 0x8d4780) and +0x358 (0x26a8, 0x8d45a0).
+  Pad vtable has 46 slots.
+- Run 38: copy the Pad vtable for the clone's manipulator only, slot 0 replaced by our function
+  that copies the Hero manipulator's processed fields (+0x10..0x300, 0x310..0x340, 0x360..0x410,
+  0x420..0x428, 0x438..0x450) instead of reading the pad. Expect: owner keeps control, clone
+  mirrors him.
