@@ -708,3 +708,12 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Run 43a/b: `run-wolf.cmd - none` (no overwrite: the clone's own pad update stands; expect it to
   walk from the local pad at once) and `run-wolf.cmd - base` (overwrite only the ChrManipulator
   part < 0x340). Tells whether walking comes from fields we overwrite or from elsewhere.
+
+### Run 43 (2026-10-28 03:58): none / base
+- Owner: in both modes the clone glides, sometimes snaps, with no walk animation. So even with no
+  overwrite the clone does not walk now. Guess: our slot-0 override (returns 0; slot 0 looks like
+  the pad-device getter) leaves the clone's own update without a device, and locomotion comes
+  from state in the PadManipulator sub-objects, not from the base fields.
+- Run 44 (run-wolf-local.cmd, no network): NOPOS, copy from the Hero's manipulator each update,
+  plus the sub-objects +0x350 (0x4f30) and +0x358 (0x26a8) qword by qword, skipping qwords that
+  are readable pointers in either object.
