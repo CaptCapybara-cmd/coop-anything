@@ -853,3 +853,11 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
   it just stands. So in those runs nothing moved it: its own input was not processed. The
   earlier gliding came from our warps/nudges (net runs) and, in run 37, from the shared pad.
   Fits the throttled-update lead (124 manipulator updates in a run).
+
+### Offline (05:05): update omission
+- Strings "OmissionUpdateNum.Near/Far", "All Omission Mode", "IsOmission"; script command
+  `ChrCmd_ForceSetOmissionLevel(int, bool, int)` (vftable 0x29ac838, 0x7543e0 →
+  EventChrEntity vt+0x1e0 = 0x74fae0): if ChrIns+0x1ff0 == -2, bit 0 of ChrIns+0x1a10 = force,
+  ChrIns+0x110 = level. Characters with omission are updated only every few frames.
+- Run 56: each step set the clone's +0x110 to the Hero's value and bit 0 of +0x1a10; log both
+  characters' values once.
