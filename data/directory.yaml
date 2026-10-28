@@ -3496,6 +3496,37 @@
   - https://www.nexusmods.com/residentevil22019/mods/2938
   - https://www.dsogaming.com/?p=197583
   checked: 2026-10-16
+- game: Resident Evil 2 (2019 remake)
+  year: 2019
+  engine: RE Engine
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope:
+    players_visible: unknown
+    story: unknown
+    enemies: unknown
+    world_state: unknown
+    items: unknown
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: No released online campaign co-op mod found in the sources searched on 2026-10-23.
+    Local Couch Co-op and RE2 Party Mode provide local play; see their separate entries.
+    This is a dated research gap, not proof that no private or unreleased prototype exists.
+  searched:
+  - GitHub repository search, 2026-10-23; no online campaign project recorded.
+  - Nexus Mods descriptions and posts for Local Couch Co-op and RE2 Party Mode, 2026-10-23.
+  - ModDB and general web search, 2026-10-23; no released online campaign candidate recorded.
+  - Detailed search queries were not retained; Steam forums and Reddit were not independently rechecked for this entry.
+  sources:
+  - https://www.nexusmods.com/residentevil22019/mods/2938
+  - https://www.nexusmods.com/residentevil22019/mods/3024
+  checked: 2026-10-23
 - game: Resident Evil Village
   year: 2021
   engine: RE Engine
