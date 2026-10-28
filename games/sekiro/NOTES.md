@@ -717,3 +717,10 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Run 44 (run-wolf-local.cmd, no network): NOPOS, copy from the Hero's manipulator each update,
   plus the sub-objects +0x350 (0x4f30) and +0x358 (0x26a8) qword by qword, skipping qwords that
   are readable pointers in either object.
+
+### Run 44 (2026-10-28 04:01): sub-object copy
+- Owner: clone neither walks nor holds block; FPS fell to 16 (the per-update qword scan with
+  VirtualQuery). Log: 420 wrapped updates, 840 sub-object copies, clone animation id 0. Dropped.
+- Run 45 (run-wolf-local.cmd): keep Pad vtable slot 0 (no override), wrappers on with no
+  overwrite (ranges none), NOPOS. Question: does the clone walk when it has its pad device, and
+  does the owner keep control (run 37 had no wrappers and he lost control)?
