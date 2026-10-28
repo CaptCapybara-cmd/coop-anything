@@ -797,3 +797,15 @@ MSVC-RTTI walker (type descriptor → complete object locator → vftable).
 - Run 53: find hkbVariableValueSet objects by vtable from the module bag (depth 5, ≤ 6000
   objects, once per character, logged), copy the Hero's word array (+0x10, size +0x18) and quad
   array (+0x20, size +0x28) into the clone's each wrapped update.
+
+### Run 53 (2026-10-28 04:46): the clone has no hkbVariableValueSet
+- Hero: two hkbVariableValueSet objects reachable from its module bag (0x32ce9320, 0x26816b30).
+  Clone: none (same search). The search ran on the game thread and froze the game ~15-20 s;
+  clone update wrapper ran once; no copy.
+- Derived: the clone PlayerIns has no Havok behavior graph instance with variables (or it is
+  not reachable the same way). Its actions play, but locomotion, which the behavior graph
+  selects from variables, cannot. This explains every run since 34.
+- Next (offline): compare how the local player is created (PlayerIns ctor callers 0xa058a0 via
+  0xa078a0, 0xa06180 via 0xa05ce0 ← 0xa080f0/0xa08430/0xa50120) with the net-player path we use
+  (0xa05a80), and find where the player's behavior graph (c0000 hkx) is instantiated.
+  Do searches like this one on the ticker thread, never the game thread.
